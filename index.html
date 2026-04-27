@@ -24,218 +24,6 @@ const firebaseConfig = {
   appId: "1:536815047003:web:729c08e78b7d669ac20a7e"
 };
 
-// ═══════════════════════════════════════════════════════
-//  ADR / PDR 시스템
-// ═══════════════════════════════════════════════════════
-var adrTabMode = 'month'; // 'month' | 'week'
-
-function setAdrTab(mode, el) {
-  adrTabMode = mode;
-  document.querySelectorAll('.adr-tab').forEach(function(t){t.classList.remove('on');});
-  el.classList.add('on');
-  refreshAdrUI();
-}
-
-function onAdrDateChange() {
-  updateAdrPreview();
-}
-
-function updateAdrPreview() {
-  var date = document.getElementById('adr-date').value;
-  var pdrVal = +(document.getElementById('adr-pdr').value) || 0;
-  var adrVal = +(document.getElementById('adr-adr').value) || 0;
-  var preview = document.getElementById('adr-preview');
-  if (!date) { if(preview) preview.textContent = '날짜를 선택하면 해당일 CFS 건수가 표시됩니다'; return; }
-  var rec = allDays.find(function(d){return d.key === date;});
-  var cfs = rec ? (rec.cfs||0) : 0;
-  var pdrPct = cfs > 0 ? (pdrVal/cfs*100).toFixed(1) : '-';
-  var adrPct = cfs > 0 ? (adrVal/cfs*100).toFixed(1) : '-';
-  var msg = date + ' 기록: CFS ' + cfs + '건';
-  if (rec) {
-    msg += ' | PDR ' + pdrVal + '/' + cfs + ' = ' + pdrPct + '% | ADR ' + adrVal + '/' + cfs + ' = ' + adrPct + '%';
-  } else {
-    msg += ' ⚠️ 해당 날짜 시술 기록 없음 — 먼저 시술 카운터에 CFS를 입력해주세요';
-  }
-  if(preview) preview.textContent = msg;
-}
-
-function adjAdr(field, d) {
-  var id = field === 'pdr' ? 'adr-pdr' : 'adr-adr';
-  var el = document.getElementById(id);
-  if(el) { el.value = Math.max(0, (+(el.value)||0) + d); updateAdrPreview(); }
-}
-
-async function saveAdrData() {
-  var date = document.getElementById('adr-date').value;
-  if (!date) { toast('날짜를 선택해주세요.'); return; }
-  var pdrVal = +(document.getElementById('adr-pdr').value) || 0;
-  var adrVal = +(document.getElementById('adr-adr').value) || 0;
-  try {
-    // merge 방식 - 기존 시술 데이터 유지
-    await daysCol(currentUid).doc(date).set({
-      key: date,
-      month: date.slice(0,7),
-      pdr: pdrVal,
-      adr: adrVal,
-    }, { merge: true });
-    // 로컬 allDays 즉시 업데이트
-    var rec = allDays.find(function(d){return d.key===date;});
-    if (rec) { rec.pdr=pdrVal; rec.adr=adrVal; }
-    else { allDays.push({key:date, month:date.slice(0,7), pdr:pdrVal, adr:adrVal, egd:0, cfs:0}); }
-    refreshAdrUI();
-    toast(date + ' ADR/PDR 저장 완료');
-  } catch(e) { toast('저장 오류: ' + e.message); }
-}
-
-function onAdrDateChange() {
-  var date = document.getElementById('adr-date').value;
-  if (!date) return;
-  // 기존 기록이 있으면 자동 채우기
-  var rec = allDays.find(function(d){return d.key===date;});
-  if (rec) {
-    var pdrEl = document.getElementById('adr-pdr');
-    var adrEl = document.getElementById('adr-adr');
-    if(pdrEl) pdrEl.value = rec.pdr != null ? rec.pdr : 0;
-    if(adrEl) adrEl.value = rec.adr != null ? rec.adr : 0;
-  }
-  updateAdrPreview();
-}
-
-function calcRate(numerator, denominator) {
-  if (!denominator || denominator === 0) return null;
-  return Math.round(numerator / denominator * 1000) / 10; // 소수점 1자리
-}
-
-function rateClass(pct) {
-  if (pct === null) return 'rate-na';
-  if (pct >= 25) return 'rate-good';
-  if (pct >= 20) return 'rate-warn';
-  return 'rate-bad';
-}
-
-function rateHTML(pct) {
-  if (pct === null) return '<span class="rate-pill rate-na">-</span>';
-  return '<span class="rate-pill ' + rateClass(pct) + '">' + pct.toFixed(1) + '%</span>';
-}
-
-function refreshAdrUI() {
-  var now = new Date();
-  var isMonth = adrTabMode === 'month';
-  
-  // ── 기간 필터링 ──
-  var filtered;
-  if (isMonth) {
-    var ym = incViewMonth || TODAY.slice(0,7);
-    filtered = allDays.filter(function(d){return (d.month||d.key.slice(0,7))===ym;});
-  } else {
-    // 이번 주 (월~일)
-    var weekStart = new Date(now);
-    weekStart.setDate(now.getDate() - now.getDay() + (now.getDay()===0?-6:1));
-    var ws = weekStart.toISOString().slice(0,10);
-    var weekEnd = new Date(weekStart);
-    weekEnd.setDate(weekStart.getDate()+6);
-    var we = weekEnd.toISOString().slice(0,10);
-    filtered = allDays.filter(function(d){return d.key>=ws && d.key<=we;});
-  }
-
-  // ── 합계 계산 ──
-  var totalCfs = filtered.reduce(function(s,d){return s+(d.cfs||0);},0);
-  var totalPdr = filtered.reduce(function(s,d){return s+(d.pdr!=null?d.pdr:0);},0);
-  var totalAdr = filtered.reduce(function(s,d){return s+(d.adr!=null?d.adr:0);},0);
-  var pdrPct = calcRate(totalPdr, totalCfs);
-  var adrPct = calcRate(totalAdr, totalCfs);
-
-  // ── 요약 카드 업데이트 ──
-  var adrEl = document.getElementById('adr-rate-val');
-  var pdrEl = document.getElementById('pdr-rate-val');
-  if(adrEl) {
-    adrEl.textContent = adrPct !== null ? adrPct.toFixed(1)+'%' : '-%';
-    adrEl.className = 'adr-rate-val ' + (adrPct===null?'':rateClass(adrPct).replace('rate-',''));
-  }
-  if(pdrEl) {
-    pdrEl.textContent = pdrPct !== null ? pdrPct.toFixed(1)+'%' : '-%';
-    pdrEl.className = 'adr-rate-val ' + (pdrPct===null?'':rateClass(pdrPct).replace('rate-',''));
-  }
-  var adrSub = document.getElementById('adr-rate-sub');
-  var pdrSub = document.getElementById('pdr-rate-sub');
-  if(adrSub) adrSub.textContent = totalAdr+'명 / CFS '+totalCfs+'건';
-  if(pdrSub) pdrSub.textContent = totalPdr+'명 / CFS '+totalCfs+'건';
-
-  // ── 테이블 렌더링 ──
-  var header = document.getElementById('adr-period-header');
-  if(header) header.textContent = isMonth ? '날짜' : '날짜';
-
-  var tbody = document.getElementById('adr-tbody');
-  var empty = document.getElementById('adr-empty');
-
-  if (!isMonth) {
-    // 주간: 요일별
-    var days = ['월','화','수','목','금','토','일'];
-    var weekRows = [];
-    var ws2 = new Date(now);
-    ws2.setDate(now.getDate() - now.getDay() + (now.getDay()===0?-6:1));
-    for (var i=0; i<7; i++) {
-      var d2 = new Date(ws2);
-      d2.setDate(ws2.getDate()+i);
-      var k = d2.toISOString().slice(0,10);
-      var rec2 = allDays.find(function(d){return d.key===k;}) || {key:k,cfs:0,pdr:null,adr:null};
-      weekRows.push({day:days[i], key:k, rec:rec2});
-    }
-    if(tbody) tbody.innerHTML = weekRows.map(function(row){
-      var rec=row.rec;
-      var cfs=rec.cfs||0;
-      var pdr=rec.pdr!=null?rec.pdr:null;
-      var adr=rec.adr!=null?rec.adr:null;
-      var isT=row.key===TODAY;
-      return '<tr>'
-        +'<td><span style="font-family:'DM Mono',monospace;">'+(isT?'<strong>':'')+row.key+'</strong> <span style="color:var(--text3);">('+row.day+')</span>'+(isT?'':'')+'</td>'
-        +'<td>'+(cfs||'-')+'</td>'
-        +'<td>'+(cfs>0&&pdr!=null?pdr:'-')+'</td>'
-        +'<td>'+rateHTML(cfs>0&&pdr!=null?calcRate(pdr,cfs):null)+'</td>'
-        +'<td>'+(cfs>0&&adr!=null?adr:'-')+'</td>'
-        +'<td>'+rateHTML(cfs>0&&adr!=null?calcRate(adr,cfs):null)+'</td>'
-        +'</tr>';
-    }).join('') + '<tr style="background:var(--surface2);font-weight:500;">'
-      +'<td>합계</td><td>'+totalCfs+'</td>'
-      +'<td>'+totalPdr+'</td><td>'+rateHTML(pdrPct)+'</td>'
-      +'<td>'+totalAdr+'</td><td>'+rateHTML(adrPct)+'</td>'
-      +'</tr>';
-    if(empty) empty.style.display='none';
-    if(tbody) tbody.style.display='';
-  } else {
-    // 월간: CFS 있는 날 + 합계
-    var monthRows = filtered.filter(function(d){return (d.cfs||0)>0 || d.pdr!=null || d.adr!=null;})
-      .sort(function(a,b){return b.key.localeCompare(a.key);});
-    if (!monthRows.length) {
-      if(empty) empty.style.display='block';
-      if(tbody) tbody.innerHTML='';
-      return;
-    }
-    if(empty) empty.style.display='none';
-    var WD2=['일','월','화','수','목','금','토'];
-    if(tbody) tbody.innerHTML = monthRows.map(function(d){
-      var cfs=d.cfs||0;
-      var pdr=d.pdr!=null?d.pdr:null;
-      var adr=d.adr!=null?d.adr:null;
-      var dt2=new Date(d.key+'T00:00:00');
-      var isT2=d.key===TODAY;
-      var hasPend = cfs>0 && (pdr===null||adr===null);
-      return '<tr>'
-        +'<td><span style="font-family:'DM Mono',monospace;font-size:11px;">'+(isT2?'<strong>':'')+d.key+(isT2?'</strong>':'')+' <span style="color:var(--text3);">'+WD2[dt2.getDay()]+'</span>'+(hasPend?' <span style="font-size:9px;color:var(--bxe-dark);">미입력</span>':'')+'</td>'
-        +'<td>'+cfs+'</td>'
-        +'<td>'+(cfs>0&&pdr!=null?pdr:'-')+'</td>'
-        +'<td>'+rateHTML(cfs>0&&pdr!=null?calcRate(pdr,cfs):null)+'</td>'
-        +'<td>'+(cfs>0&&adr!=null?adr:'-')+'</td>'
-        +'<td>'+rateHTML(cfs>0&&adr!=null?calcRate(adr,cfs):null)+'</td>'
-        +'</tr>';
-    }).join('') + '<tr style="background:var(--surface2);font-weight:500;">'
-      +'<td>합계</td><td>'+totalCfs+'</td>'
-      +'<td>'+totalPdr+'</td><td>'+rateHTML(pdrPct)+'</td>'
-      +'<td>'+totalAdr+'</td><td>'+rateHTML(adrPct)+'</td>'
-      +'</tr>';
-  }
-}
-
 </script>
 <!-- ██████████████████████████████████████████ -->
 
@@ -1591,8 +1379,8 @@ const settingsRef = uid => db.collection('users').doc(uid).collection('settings'
 // ══════════════════════════════════
 let currentUid = null;
 
-const APP_PASSWORD = 'endo1234';
-const FIXED_UID = 'endoapp-user-01';
+var APP_PASSWORD = 'endo1234';
+var FIXED_UID = 'endoapp-user-01';
 
 function checkPw() {
   const val = document.getElementById('pw-inp').value;
@@ -2546,6 +2334,177 @@ function showDiagSuggest(val){const el=document.getElementById('diag-suggest');i
 function hideDiagSuggest(){const el=document.getElementById('diag-suggest');if(el)el.classList.remove('show');}
 function selectDiag(name){const inp=document.getElementById('f-name');if(inp)inp.value=name;hideDiagSuggest();}
 let noteTagFilter_='';function buildNoteTagFilters_(){buildNoteTagFilters();}
+
+// ═══════════════════════════════════════════════════════
+//  ADR / PDR 시스템
+// ═══════════════════════════════════════════════════════
+var adrTabMode = 'month';
+
+function setAdrTab(mode, el) {
+  adrTabMode = mode;
+  document.querySelectorAll('.adr-tab').forEach(function(t){t.classList.remove('on');});
+  el.classList.add('on');
+  refreshAdrUI();
+}
+
+function onAdrDateChange() {
+  var date = document.getElementById('adr-date').value;
+  if (!date) return;
+  var rec = allDays.find(function(d){return d.key===date;});
+  if (rec) {
+    var pdrEl=document.getElementById('adr-pdr'); if(pdrEl)pdrEl.value=rec.pdr!=null?rec.pdr:0;
+    var adrEl=document.getElementById('adr-adr'); if(adrEl)adrEl.value=rec.adr!=null?rec.adr:0;
+  }
+  updateAdrPreview();
+}
+
+function updateAdrPreview() {
+  var date=document.getElementById('adr-date').value;
+  var pdrVal=+(document.getElementById('adr-pdr').value)||0;
+  var adrVal=+(document.getElementById('adr-adr').value)||0;
+  var preview=document.getElementById('adr-preview');
+  if(!date){if(preview)preview.textContent='날짜를 선택하면 해당일 CFS 건수가 표시됩니다';return;}
+  var rec=allDays.find(function(d){return d.key===date;});
+  var cfs=rec?rec.cfs||0:0;
+  var pdrPct=cfs>0?(pdrVal/cfs*100).toFixed(1):'-';
+  var adrPct=cfs>0?(adrVal/cfs*100).toFixed(1):'-';
+  var msg=date+' — CFS '+cfs+'건 | PDR '+pdrVal+'/'+cfs+'='+pdrPct+'% | ADR '+adrVal+'/'+cfs+'='+adrPct+'%';
+  if(!rec)msg=date+' ⚠️ 시술 기록 없음 — 먼저 CFS를 입력해주세요';
+  if(preview)preview.textContent=msg;
+}
+
+function adjAdr(field, d) {
+  var id=field==='pdr'?'adr-pdr':'adr-adr';
+  var el=document.getElementById(id);
+  if(el){el.value=Math.max(0,(+(el.value)||0)+d); updateAdrPreview();}
+}
+
+async function saveAdrData() {
+  var date=document.getElementById('adr-date').value;
+  if(!date){toast('날짜를 선택해주세요.');return;}
+  var pdrVal=+(document.getElementById('adr-pdr').value)||0;
+  var adrVal=+(document.getElementById('adr-adr').value)||0;
+  try {
+    await daysCol(currentUid).doc(date).set({key:date,month:date.slice(0,7),pdr:pdrVal,adr:adrVal},{merge:true});
+    var rec=allDays.find(function(d){return d.key===date;});
+    if(rec){rec.pdr=pdrVal;rec.adr=adrVal;}
+    else{allDays.push({key:date,month:date.slice(0,7),pdr:pdrVal,adr:adrVal,egd:0,cfs:0});}
+    refreshAdrUI();
+    toast(date+' ADR/PDR 저장 완료');
+  } catch(e){toast('저장 오류: '+e.message);}
+}
+
+function calcRate(n,d) {
+  if(!d||d===0)return null;
+  return Math.round(n/d*1000)/10;
+}
+
+function rateClass(pct) {
+  if(pct===null)return 'rate-na';
+  if(pct>=25)return 'rate-good';
+  if(pct>=20)return 'rate-warn';
+  return 'rate-bad';
+}
+
+function rateHTML(pct) {
+  if(pct===null)return '<span class="rate-pill rate-na">-</span>';
+  return '<span class="rate-pill '+rateClass(pct)+'">'+pct.toFixed(1)+'%</span>';
+}
+
+function refreshAdrUI() {
+  var now=new Date();
+  var isMonth=adrTabMode==='month';
+  var filtered;
+  if(isMonth){
+    var ym=incViewMonth||TODAY.slice(0,7);
+    filtered=allDays.filter(function(d){return(d.month||d.key.slice(0,7))===ym;});
+  } else {
+    var dow=now.getDay();
+    var diff=dow===0?-6:1-dow;
+    var ws=new Date(now);ws.setDate(now.getDate()+diff);
+    var wsStr=ws.toISOString().slice(0,10);
+    var we=new Date(ws);we.setDate(ws.getDate()+6);
+    var weStr=we.toISOString().slice(0,10);
+    filtered=allDays.filter(function(d){return d.key>=wsStr&&d.key<=weStr;});
+  }
+  var totalCfs=filtered.reduce(function(s,d){return s+(d.cfs||0);},0);
+  var totalPdr=filtered.reduce(function(s,d){return s+(d.pdr!=null?d.pdr:0);},0);
+  var totalAdr=filtered.reduce(function(s,d){return s+(d.adr!=null?d.adr:0);},0);
+  var pdrPct=calcRate(totalPdr,totalCfs);
+  var adrPct=calcRate(totalAdr,totalCfs);
+
+  var adrEl=document.getElementById('adr-rate-val');
+  if(adrEl){adrEl.textContent=adrPct!==null?adrPct.toFixed(1)+'%':'-%';adrEl.className='adr-rate-val'+(adrPct===null?'':' '+(adrPct>=25?'good':adrPct>=20?'warn':'bad'));}
+  var pdrEl=document.getElementById('pdr-rate-val');
+  if(pdrEl){pdrEl.textContent=pdrPct!==null?pdrPct.toFixed(1)+'%':'-%';pdrEl.className='adr-rate-val'+(pdrPct===null?'':' '+(pdrPct>=25?'good':pdrPct>=20?'warn':'bad'));}
+  var adrSub=document.getElementById('adr-rate-sub');if(adrSub)adrSub.textContent=totalAdr+'명 / CFS '+totalCfs+'건';
+  var pdrSub=document.getElementById('pdr-rate-sub');if(pdrSub)pdrSub.textContent=totalPdr+'명 / CFS '+totalCfs+'건';
+
+  var tbody=document.getElementById('adr-tbody');
+  var empty=document.getElementById('adr-empty');
+  var WD=['일','월','화','수','목','금','토'];
+
+  if(!isMonth){
+    var dow2=now.getDay();var diff2=dow2===0?-6:1-dow2;
+    var ws2=new Date(now);ws2.setDate(now.getDate()+diff2);
+    var dayNames=['월','화','수','목','금','토','일'];
+    var rows='';
+    for(var i=0;i<7;i++){
+      var d2=new Date(ws2);d2.setDate(ws2.getDate()+i);
+      var k=d2.toISOString().slice(0,10);
+      var rec2=allDays.find(function(d){return d.key===k;})||{key:k,cfs:0,pdr:null,adr:null};
+      var cfs2=rec2.cfs||0;
+      var isT2=k===TODAY;
+      rows+='<tr>'
+        +'<td class="dtxt" style="font-size:11px;">'+(isT2?'<strong>':'')+k+'</strong>'
+        +' <span style="color:var(--text3);">('+dayNames[i]+')</span></td>'
+        +'<td>'+(cfs2||'-')+'</td>'
+        +'<td>'+(cfs2>0&&rec2.pdr!=null?rec2.pdr:'-')+'</td>'
+        +'<td>'+rateHTML(cfs2>0&&rec2.pdr!=null?calcRate(rec2.pdr,cfs2):null)+'</td>'
+        +'<td>'+(cfs2>0&&rec2.adr!=null?rec2.adr:'-')+'</td>'
+        +'<td>'+rateHTML(cfs2>0&&rec2.adr!=null?calcRate(rec2.adr,cfs2):null)+'</td>'
+        +'</tr>';
+    }
+    rows+='<tr style="background:var(--surface2);font-weight:500;">'
+      +'<td>합계</td><td>'+totalCfs+'</td>'
+      +'<td>'+totalPdr+'</td><td>'+rateHTML(pdrPct)+'</td>'
+      +'<td>'+totalAdr+'</td><td>'+rateHTML(adrPct)+'</td>'
+      +'</tr>';
+    if(tbody)tbody.innerHTML=rows;
+    if(empty)empty.style.display='none';
+  } else {
+    var monthRows=filtered.filter(function(d){return(d.cfs||0)>0||d.pdr!=null||d.adr!=null;})
+      .sort(function(a,b){return b.key.localeCompare(a.key);});
+    if(!monthRows.length){if(empty)empty.style.display='block';if(tbody)tbody.innerHTML='';return;}
+    if(empty)empty.style.display='none';
+    var rows2='';
+    for(var j=0;j<monthRows.length;j++){
+      var d3=monthRows[j];
+      var cfs3=d3.cfs||0;
+      var dt3=new Date(d3.key+'T00:00:00');
+      var isT3=d3.key===TODAY;
+      var hasPend=cfs3>0&&(d3.pdr===null||d3.pdr===undefined||d3.adr===null||d3.adr===undefined);
+      rows2+='<tr>'
+        +'<td class="dtxt" style="font-size:11px;">'
+        +(isT3?'<strong>':'')+d3.key+(isT3?'</strong>':'')+' <span style="color:var(--text3);">'+WD[dt3.getDay()]+'</span>'
+        +(hasPend?' <span style="font-size:9px;color:var(--bxe-dark);">미입력</span>':'')
+        +'</td>'
+        +'<td>'+cfs3+'</td>'
+        +'<td>'+(cfs3>0&&d3.pdr!=null?d3.pdr:'-')+'</td>'
+        +'<td>'+rateHTML(cfs3>0&&d3.pdr!=null?calcRate(d3.pdr,cfs3):null)+'</td>'
+        +'<td>'+(cfs3>0&&d3.adr!=null?d3.adr:'-')+'</td>'
+        +'<td>'+rateHTML(cfs3>0&&d3.adr!=null?calcRate(d3.adr,cfs3):null)+'</td>'
+        +'</tr>';
+    }
+    rows2+='<tr style="background:var(--surface2);font-weight:500;">'
+      +'<td>합계</td><td>'+totalCfs+'</td>'
+      +'<td>'+totalPdr+'</td><td>'+rateHTML(pdrPct)+'</td>'
+      +'<td>'+totalAdr+'</td><td>'+rateHTML(adrPct)+'</td>'
+      +'</tr>';
+    if(tbody)tbody.innerHTML=rows2;
+  }
+}
+
 </script>
 </body>
 </html>async function loadDayData(date) {
