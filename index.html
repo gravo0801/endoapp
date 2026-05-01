@@ -939,26 +939,26 @@ html,body{height:100%;font-family:'Noto Sans KR',sans-serif;background:var(--sb)
         <!-- 목표 설정 -->
         <div id="target-card" class="target-card" style="display:none;">
           <div style="font-size:12px;font-weight:500;color:var(--text);margin-bottom:12px;">📋 월별 목표 점수 설정</div>
-          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:10px;" id="monthly-targets">
-<div class="target-field"><span class="target-lbl" style="min-width:28px;">1월</span><input class="target-inp" id="target-m1" type="number" value="1000" min="0" onchange="saveTargets()" style="width:64px;"/><span style="font-size:11px;color:var(--text3);">p</span></div>
-<div class="target-field"><span class="target-lbl" style="min-width:28px;">2월</span><input class="target-inp" id="target-m2" type="number" value="1000" min="0" onchange="saveTargets()" style="width:64px;"/><span style="font-size:11px;color:var(--text3);">p</span></div>
-<div class="target-field"><span class="target-lbl" style="min-width:28px;">3월</span><input class="target-inp" id="target-m3" type="number" value="1000" min="0" onchange="saveTargets()" style="width:64px;"/><span style="font-size:11px;color:var(--text3);">p</span></div>
-<div class="target-field"><span class="target-lbl" style="min-width:28px;">4월</span><input class="target-inp" id="target-m4" type="number" value="1000" min="0" onchange="saveTargets()" style="width:64px;"/><span style="font-size:11px;color:var(--text3);">p</span></div>
-<div class="target-field"><span class="target-lbl" style="min-width:28px;">5월</span><input class="target-inp" id="target-m5" type="number" value="1000" min="0" onchange="saveTargets()" style="width:64px;"/><span style="font-size:11px;color:var(--text3);">p</span></div>
-<div class="target-field"><span class="target-lbl" style="min-width:28px;">6월</span><input class="target-inp" id="target-m6" type="number" value="1000" min="0" onchange="saveTargets()" style="width:64px;"/><span style="font-size:11px;color:var(--text3);">p</span></div>
-<div class="target-field"><span class="target-lbl" style="min-width:28px;">7월</span><input class="target-inp" id="target-m7" type="number" value="1300" min="0" onchange="saveTargets()" style="width:64px;"/><span style="font-size:11px;color:var(--text3);">p</span></div>
-<div class="target-field"><span class="target-lbl" style="min-width:28px;">8월</span><input class="target-inp" id="target-m8" type="number" value="1300" min="0" onchange="saveTargets()" style="width:64px;"/><span style="font-size:11px;color:var(--text3);">p</span></div>
-<div class="target-field"><span class="target-lbl" style="min-width:28px;">9월</span><input class="target-inp" id="target-m9" type="number" value="1300" min="0" onchange="saveTargets()" style="width:64px;"/><span style="font-size:11px;color:var(--text3);">p</span></div>
-<div class="target-field"><span class="target-lbl" style="min-width:28px;">10월</span><input class="target-inp" id="target-m10" type="number" value="1300" min="0" onchange="saveTargets()" style="width:64px;"/><span style="font-size:11px;color:var(--text3);">p</span></div>
-<div class="target-field"><span class="target-lbl" style="min-width:28px;">11월</span><input class="target-inp" id="target-m11" type="number" value="1300" min="0" onchange="saveTargets()" style="width:64px;"/><span style="font-size:11px;color:var(--text3);">p</span></div>
-<div class="target-field"><span class="target-lbl" style="min-width:28px;">12월</span><input class="target-inp" id="target-m12" type="number" value="1300" min="0" onchange="saveTargets()" style="width:64px;"/><span style="font-size:11px;color:var(--text3);">p</span></div>
+          <div class="target-grid" style="grid-template-columns:repeat(4,1fr);gap:8px;" id="monthly-targets">
+            <div class="target-field"><span class="target-lbl" style="min-width:24px;">1월</span><input class="target-inp" id="target-m1" type="number" value="1000" min="0" onchange="saveTargets()" style="width:60px;"/>p</div>
+            <div class="target-field"><span class="target-lbl" style="min-width:24px;">2월</span><input class="target-inp" id="target-m2" type="number" value="1000" min="0" onchange="saveTargets()" style="width:60px;"/>p</div>
+            <div class="target-field"><span class="target-lbl" style="min-width:24px;">3월</span><input class="target-inp" id="target-m3" type="number" value="1000" min="0" onchange="saveTargets()" style="width:60px;"/>p</div>
+            <div class="target-field"><span class="target-lbl" style="min-width:24px;">4월</span><input class="target-inp" id="target-m4" type="number" value="1000" min="0" onchange="saveTargets()" style="width:60px;"/>p</div>
+            <div class="target-field"><span class="target-lbl" style="min-width:24px;">5월</span><input class="target-inp" id="target-m5" type="number" value="1000" min="0" onchange="saveTargets()" style="width:60px;"/>p</div>
+            <div class="target-field"><span class="target-lbl" style="min-width:24px;">6월</span><input class="target-inp" id="target-m6" type="number" value="1000" min="0" onchange="saveTargets()" style="width:60px;"/>p</div>
+            <div class="target-field"><span class="target-lbl" style="min-width:24px;">7월</span><input class="target-inp" id="target-m7" type="number" value="1300" min="0" onchange="saveTargets()" style="width:60px;"/>p</div>
+            <div class="target-field"><span class="target-lbl" style="min-width:24px;">8월</span><input class="target-inp" id="target-m8" type="number" value="1300" min="0" onchange="saveTargets()" style="width:60px;"/>p</div>
+            <div class="target-field"><span class="target-lbl" style="min-width:24px;">9월</span><input class="target-inp" id="target-m9" type="number" value="1300" min="0" onchange="saveTargets()" style="width:60px;"/>p</div>
+            <div class="target-field"><span class="target-lbl" style="min-width:24px;">10월</span><input class="target-inp" id="target-m10" type="number" value="1300" min="0" onchange="saveTargets()" style="width:60px;"/>p</div>
+            <div class="target-field"><span class="target-lbl" style="min-width:24px;">11월</span><input class="target-inp" id="target-m11" type="number" value="1300" min="0" onchange="saveTargets()" style="width:60px;"/>p</div>
+            <div class="target-field"><span class="target-lbl" style="min-width:24px;">12월</span><input class="target-inp" id="target-m12" type="number" value="1300" min="0" onchange="saveTargets()" style="width:60px;"/>p</div>
           </div>
-          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;">
-            <button onclick="setAllTargets(1000)" style="font-size:11px;padding:4px 10px;border-radius:var(--rsm);background:var(--surface2);border:1px solid var(--border);cursor:pointer;font-family:'Noto Sans KR',sans-serif;">전체 1000p</button>
-            <button onclick="setAllTargets(1300)" style="font-size:11px;padding:4px 10px;border-radius:var(--rsm);background:var(--surface2);border:1px solid var(--border);cursor:pointer;font-family:'Noto Sans KR',sans-serif;">전체 1300p</button>
-            <button onclick="setHalfTargets()" style="font-size:11px;padding:4px 10px;border-radius:var(--rsm);background:var(--egd-bg);border:1px solid var(--egd-light);color:var(--egd-dark);cursor:pointer;font-family:'Noto Sans KR',sans-serif;">상/하반기 분리</button>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;margin-bottom:6px;">
+            <button onclick="setAllTargets(1000)" style="font-size:11px;padding:4px 10px;border-radius:var(--rsm);background:var(--surface2);border:1px solid var(--border);cursor:pointer;">전체 1000p</button>
+            <button onclick="setAllTargets(1300)" style="font-size:11px;padding:4px 10px;border-radius:var(--rsm);background:var(--surface2);border:1px solid var(--border);cursor:pointer;">전체 1300p</button>
+            <button onclick="setHalfTargets()" style="font-size:11px;padding:4px 10px;border-radius:var(--rsm);background:var(--egd-bg);border:1px solid var(--egd-light);color:var(--egd-dark);cursor:pointer;">상/하반기 분리</button>
           </div>
-          <div style="font-size:10px;color:var(--text3);line-height:1.7;">등급: EX≥110% / VG≥100% / GD≥90% / NI≥80% (목표 기준)</div>
+          <div style="font-size:10px;color:var(--text3);line-height:1.7;">등급: EX≥110% / VG≥100% / GD≥90% / NI≥80%</div>
         </div><div class="inc-month-sub" id="inc-hero-sub">누적 점수</div></div>
             <div style="text-align:right;">
               <div class="grade-badge grade-NI" id="inc-grade-badge">-</div>
@@ -1666,22 +1666,7 @@ const POINT = { egd:1, cfs:2, bxe:0.5, bxc:0.5, cpp:1, clo:0.5 };
 const GRADE_H1 = [{g:'EX',min:1100,amt:'250만'},{g:'VG',min:1000,amt:'200만'},{g:'GD',min:900,amt:'150만'},{g:'NI',min:800,amt:'100만'},{g:'UN',min:0,amt:'50만'}];
 const GRADE_H2 = [{g:'EX',min:1300,amt:'250만'},{g:'VG',min:1200,amt:'200만'},{g:'GD',min:1100,amt:'150만'},{g:'NI',min:1000,amt:'100만'},{g:'UN',min:0,amt:'50만'}];
 
-function getMonthTarget(ym){ return parseInt(ym.slice(5,7))>=7 ? incSettings.h2 : incSettings.h1; }
-function getGrade(pts,ym){ const g=parseInt(ym.slice(5,7))>=7?GRADE_H2:GRADE_H1; return g.find(x=>pts>=x.min)||g[g.length-1]; }
-
-function init() {
-  document.getElementById('inp-date').value = TODAY;
-  const adrDt=document.getElementById('adr-date'); if(adrDt)adrDt.value=TODAY;
-  document.getElementById('cnt-sub').textContent = `누적 기록 현황 · 오늘 ${TODAY}`;
-  incViewMonth = TODAY.slice(0,7);
-  loadAllDays();
-  loadAllCases();
-  loadAllNotes();
-  loadAllJournal();
-  loadAllLegal();
-  loadIncentiveSettings();
-  loadDayData(TODAY);
-}
+function getMonthTarget(ym){var mo=parseInt(ym.slice(5,7));if(incSettings.monthly&&incSettings.monthly[mo])return incSettings.monthly[mo];return mo>=7?(incSettings.h2||1300):(incSettings.h1||1000);}
 
 // ══════════════════════════════════
 //  PAGE SWITCH
