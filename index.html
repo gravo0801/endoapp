@@ -774,7 +774,21 @@ html,body{height:100%;font-family:'Noto Sans KR',sans-serif;background:var(--sb)
 .lcard-date{font-size:11px;color:var(--text3);white-space:nowrap;margin-top:3px;flex-shrink:0;}
 .lcard-preview{font-size:12px;color:var(--text3);line-height:1.7;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
 .lcard-foot{display:flex;align-items:center;gap:8px;margin-top:10px;flex-wrap:wrap;}
-@media(max-width:768px){.inc-stats-row{grid-template-columns:repeat(2,1fr);}.inc-grid{grid-template-columns:repeat(2,1fr);}.target-grid{grid-template-columns:1fr;}.cpanel{display:none;}}
+@media(max-width:768px){
+  .inc-stats-row{grid-template-columns:repeat(2,1fr);}
+  .inc-grid{grid-template-columns:repeat(2,1fr);}
+  .target-grid{grid-template-columns:1fr;}
+  .cpanel{display:none;}
+  .adr-input-row{grid-template-columns:1fr!important;}
+  .adr-save-btn{width:100%!important;justify-content:center;}
+  .adr-inp-group{width:100%;}
+  .adr-stepper{width:100%;}
+  #monthly-targets{grid-template-columns:repeat(3,1fr)!important;}
+  .adr-rate-grid{grid-template-columns:1fr 1fr;}
+}
+@media(max-width:400px){
+  #monthly-targets{grid-template-columns:repeat(2,1fr)!important;}
+}
 
 .drive-link-item{display:flex;align-items:center;gap:8px;padding:9px 12px;background:var(--surface2);border-radius:var(--rsm);margin-bottom:7px;border:1px solid var(--border);}
 .drive-link-icon{width:28px;height:28px;border-radius:6px;background:var(--egd-bg);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
@@ -1061,13 +1075,15 @@ html,body{height:100%;font-family:'Noto Sans KR',sans-serif;background:var(--sb)
           <!-- ADR 입력 (날짜 선택 + 소급 입력) -->
           <div style="background:var(--surface2);border-radius:var(--rsm);padding:14px;margin-bottom:12px;">
             <div style="font-size:11px;font-weight:500;color:var(--text2);margin-bottom:10px;">📝 날짜별 ADR/PDR 기록</div>
-            <div class="adr-input-row">
+            <!-- 날짜 -->
+            <div class="adr-inp-group" style="margin-bottom:10px;">
+              <span class="adr-inp-lbl">날짜 선택</span>
+              <input class="dinp" type="date" id="adr-date" style="font-size:12px;padding:6px 10px;width:100%;box-sizing:border-box;" onchange="onAdrDateChange()"/>
+            </div>
+            <!-- PDR / ADR 2열 -->
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
               <div class="adr-inp-group">
-                <span class="adr-inp-lbl">날짜 선택</span>
-                <input class="dinp" type="date" id="adr-date" style="font-size:12px;padding:6px 10px;" onchange="onAdrDateChange()"/>
-              </div>
-              <div class="adr-inp-group">
-                <span class="adr-inp-lbl">PDR 용종 환자수 <span style="font-size:9px;color:var(--text3);">(당일)</span></span>
+                <span class="adr-inp-lbl">🫧 PDR 용종 환자수<br/><span style="font-size:9px;color:var(--text3);">당일 바로 입력</span></span>
                 <div class="adr-stepper">
                   <button class="adr-btn" onclick="adjAdr('pdr',-1)">−</button>
                   <input class="adr-inp" type="number" id="adr-pdr" value="0" min="0" oninput="updateAdrPreview()"/>
@@ -1075,7 +1091,7 @@ html,body{height:100%;font-family:'Noto Sans KR',sans-serif;background:var(--sb)
                 </div>
               </div>
               <div class="adr-inp-group">
-                <span class="adr-inp-lbl">ADR 선종/이형성증 환자수 <span style="font-size:9px;color:var(--cfs-dark);">(소급)</span></span>
+                <span class="adr-inp-lbl">🔬 ADR 선종 환자수<br/><span style="font-size:9px;color:var(--cfs-dark);">조직검사 후 소급</span></span>
                 <div class="adr-stepper">
                   <button class="adr-btn" onclick="adjAdr('adr',-1)">−</button>
                   <input class="adr-inp" type="number" id="adr-adr" value="0" min="0" oninput="updateAdrPreview()"/>
@@ -1085,7 +1101,7 @@ html,body{height:100%;font-family:'Noto Sans KR',sans-serif;background:var(--sb)
             </div>
             <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
               <div id="adr-preview" style="font-size:11px;color:var(--text3);line-height:1.6;margin-bottom:6px;word-break:keep-all;">날짜를 선택하면 해당일 CFS 건수가 표시됩니다</div>
-              <button class="adr-save-btn" onclick="saveAdrData()" style="width:100%;justify-content:center;margin-top:6px;">💾 저장</button>
+              <button class="adr-save-btn" onclick="saveAdrData()" style="width:100%;justify-content:center;padding:10px;">💾 ADR/PDR 저장</button>
             </div>
           </div>
 
