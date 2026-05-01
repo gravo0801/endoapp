@@ -927,18 +927,27 @@ html,body{height:100%;font-family:'Noto Sans KR',sans-serif;background:var(--sb)
         <!-- 목표 설정 -->
         <div id="target-card" class="target-card" style="display:none;">
           <div style="font-size:12px;font-weight:500;color:var(--text);margin-bottom:12px;">📋 월별 목표 점수 설정</div>
-          <div class="target-grid">
-            <div class="target-field"><span class="target-lbl">1~6월 목표</span><input class="target-inp" id="target-h1" type="number" value="1000" min="0" onchange="saveTargets()"/>p</div>
-            <div class="target-field"><span class="target-lbl">7~12월 목표</span><input class="target-inp" id="target-h2" type="number" value="1300" min="0" onchange="saveTargets()"/>p</div>
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:10px;" id="monthly-targets">
+<div class="target-field"><span class="target-lbl" style="min-width:28px;">1월</span><input class="target-inp" id="target-m1" type="number" value="1000" min="0" onchange="saveTargets()" style="width:64px;"/><span style="font-size:11px;color:var(--text3);">p</span></div>
+<div class="target-field"><span class="target-lbl" style="min-width:28px;">2월</span><input class="target-inp" id="target-m2" type="number" value="1000" min="0" onchange="saveTargets()" style="width:64px;"/><span style="font-size:11px;color:var(--text3);">p</span></div>
+<div class="target-field"><span class="target-lbl" style="min-width:28px;">3월</span><input class="target-inp" id="target-m3" type="number" value="1000" min="0" onchange="saveTargets()" style="width:64px;"/><span style="font-size:11px;color:var(--text3);">p</span></div>
+<div class="target-field"><span class="target-lbl" style="min-width:28px;">4월</span><input class="target-inp" id="target-m4" type="number" value="1000" min="0" onchange="saveTargets()" style="width:64px;"/><span style="font-size:11px;color:var(--text3);">p</span></div>
+<div class="target-field"><span class="target-lbl" style="min-width:28px;">5월</span><input class="target-inp" id="target-m5" type="number" value="1000" min="0" onchange="saveTargets()" style="width:64px;"/><span style="font-size:11px;color:var(--text3);">p</span></div>
+<div class="target-field"><span class="target-lbl" style="min-width:28px;">6월</span><input class="target-inp" id="target-m6" type="number" value="1000" min="0" onchange="saveTargets()" style="width:64px;"/><span style="font-size:11px;color:var(--text3);">p</span></div>
+<div class="target-field"><span class="target-lbl" style="min-width:28px;">7월</span><input class="target-inp" id="target-m7" type="number" value="1300" min="0" onchange="saveTargets()" style="width:64px;"/><span style="font-size:11px;color:var(--text3);">p</span></div>
+<div class="target-field"><span class="target-lbl" style="min-width:28px;">8월</span><input class="target-inp" id="target-m8" type="number" value="1300" min="0" onchange="saveTargets()" style="width:64px;"/><span style="font-size:11px;color:var(--text3);">p</span></div>
+<div class="target-field"><span class="target-lbl" style="min-width:28px;">9월</span><input class="target-inp" id="target-m9" type="number" value="1300" min="0" onchange="saveTargets()" style="width:64px;"/><span style="font-size:11px;color:var(--text3);">p</span></div>
+<div class="target-field"><span class="target-lbl" style="min-width:28px;">10월</span><input class="target-inp" id="target-m10" type="number" value="1300" min="0" onchange="saveTargets()" style="width:64px;"/><span style="font-size:11px;color:var(--text3);">p</span></div>
+<div class="target-field"><span class="target-lbl" style="min-width:28px;">11월</span><input class="target-inp" id="target-m11" type="number" value="1300" min="0" onchange="saveTargets()" style="width:64px;"/><span style="font-size:11px;color:var(--text3);">p</span></div>
+<div class="target-field"><span class="target-lbl" style="min-width:28px;">12월</span><input class="target-inp" id="target-m12" type="number" value="1300" min="0" onchange="saveTargets()" style="width:64px;"/><span style="font-size:11px;color:var(--text3);">p</span></div>
           </div>
-          <div style="font-size:10px;color:var(--text3);margin-top:10px;line-height:1.7;">
-            등급 기준 — <b>1~6월:</b> EX≥1100 / VG≥1000 / GD≥900 / NI≥800 | <b>7~12월:</b> EX≥1300 / VG≥1200 / GD≥1100 / NI≥1000
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;">
+            <button onclick="setAllTargets(1000)" style="font-size:11px;padding:4px 10px;border-radius:var(--rsm);background:var(--surface2);border:1px solid var(--border);cursor:pointer;font-family:'Noto Sans KR',sans-serif;">전체 1000p</button>
+            <button onclick="setAllTargets(1300)" style="font-size:11px;padding:4px 10px;border-radius:var(--rsm);background:var(--surface2);border:1px solid var(--border);cursor:pointer;font-family:'Noto Sans KR',sans-serif;">전체 1300p</button>
+            <button onclick="setHalfTargets()" style="font-size:11px;padding:4px 10px;border-radius:var(--rsm);background:var(--egd-bg);border:1px solid var(--egd-light);color:var(--egd-dark);cursor:pointer;font-family:'Noto Sans KR',sans-serif;">상/하반기 분리</button>
           </div>
-        </div>
-        <!-- PTS Hero -->
-        <div class="inc-hero">
-          <div class="inc-hero-top">
-            <div><div class="inc-month-title" id="inc-hero-title">-월 PTS</div><div class="inc-month-sub" id="inc-hero-sub">누적 점수</div></div>
+          <div style="font-size:10px;color:var(--text3);line-height:1.7;">등급: EX≥110% / VG≥100% / GD≥90% / NI≥80% (목표 기준)</div>
+        </div><div class="inc-month-sub" id="inc-hero-sub">누적 점수</div></div>
             <div style="text-align:right;">
               <div class="grade-badge grade-NI" id="inc-grade-badge">-</div>
               <div style="font-size:10px;color:rgba(255,255,255,0.5);margin-top:5px;" id="inc-incentive-amt">-</div>
@@ -1075,8 +1084,8 @@ html,body{height:100%;font-family:'Noto Sans KR',sans-serif;background:var(--sb)
               </div>
             </div>
             <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
-              <div id="adr-preview" style="font-size:11px;color:var(--text3);">날짜를 선택하면 해당일 CFS 건수가 표시됩니다</div>
-              <button class="adr-save-btn" onclick="saveAdrData()">저장</button>
+              <div id="adr-preview" style="font-size:11px;color:var(--text3);line-height:1.6;margin-bottom:6px;word-break:keep-all;">날짜를 선택하면 해당일 CFS 건수가 표시됩니다</div>
+              <button class="adr-save-btn" onclick="saveAdrData()" style="width:100%;justify-content:center;margin-top:6px;">💾 저장</button>
             </div>
           </div>
 
@@ -2229,15 +2238,22 @@ async function loadIncentiveSettings() {
   try {
     const doc=await settingsRef(currentUid).get();
     if(doc.exists) incSettings={...incSettings,...doc.data()};
+    if(!incSettings.monthly) incSettings.monthly=[0,1000,1000,1000,1000,1000,1000,1300,1300,1300,1300,1300,1300];
   } catch(e){}
+  for(var mi=1;mi<=12;mi++){var mel2=document.getElementById('target-m'+mi);if(mel2)mel2.value=incSettings.monthly[mi]||(mi>=7?1300:1000);}
   const h1=document.getElementById('target-h1'); if(h1) h1.value=incSettings.h1;
   const h2=document.getElementById('target-h2'); if(h2) h2.value=incSettings.h2;
 }
 async function saveTargets() {
-  incSettings.h1=+document.getElementById('target-h1').value||1000;
-  incSettings.h2=+document.getElementById('target-h2').value||1300;
-  try{await settingsRef(currentUid).set(incSettings);}catch(e){}
-  refreshIncentiveUI(); toast('목표 저장 완료');
+  if (!incSettings.monthly) incSettings.monthly=[0,1000,1000,1000,1000,1000,1000,1300,1300,1300,1300,1300,1300];
+  for (var mi=1; mi<=12; mi++) {
+    var mel=document.getElementById('target-m'+mi);
+    if(mel) incSettings.monthly[mi]=+mel.value||(mi>=7?1300:1000);
+  }
+  incSettings.h1=incSettings.monthly[1];
+  incSettings.h2=incSettings.monthly[7];
+  settingsRef(currentUid).set(incSettings).catch(function(e){});
+  refreshIncentiveUI(); refreshAdrUI(); toast('목표 저장 완료');
 }
 function toggleTargetEdit(){const el=document.getElementById('target-card');el.style.display=el.style.display==='none'?'':'none';}
 function loadIncentive(ym) {
@@ -2343,7 +2359,7 @@ async function runAIAnalysis(){
 
 분석 내용: 1)현재 페이스 평가 2)다음 등급 달성 전략 3)구체적 일일 목표 4)응원 메시지 (간결하게 3-4문단)`;
   try{
-    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:prompt}]})});
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:prompt}]})});
     const data=await res.json();
     textEl.textContent=data.content?.[0]?.text||'분석 결과를 가져오지 못했습니다.';
   }catch(e){textEl.textContent='⚠️ AI 분석 오류: '+e.message;}
