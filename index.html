@@ -959,7 +959,11 @@ html,body{height:100%;font-family:'Noto Sans KR',sans-serif;background:var(--sb)
             <button onclick="setHalfTargets()" style="font-size:11px;padding:4px 10px;border-radius:var(--rsm);background:var(--egd-bg);border:1px solid var(--egd-light);color:var(--egd-dark);cursor:pointer;">상/하반기 분리</button>
           </div>
           <div style="font-size:10px;color:var(--text3);line-height:1.7;">등급: EX≥110% / VG≥100% / GD≥90% / NI≥80%</div>
-        </div><div class="inc-month-sub" id="inc-hero-sub">누적 점수</div></div>
+        </div>
+        <!-- PTS Hero -->
+        <div class="inc-hero">
+          <div class="inc-hero-top">
+            <div><div class="inc-month-title" id="inc-hero-title">-월 PTS</div><div class="inc-month-sub" id="inc-hero-sub">누적 점수</div></div>
             <div style="text-align:right;">
               <div class="grade-badge grade-NI" id="inc-grade-badge">-</div>
               <div style="font-size:10px;color:rgba(255,255,255,0.5);margin-top:5px;" id="inc-incentive-amt">-</div>
@@ -1073,15 +1077,13 @@ html,body{height:100%;font-family:'Noto Sans KR',sans-serif;background:var(--sb)
           <!-- ADR 입력 (날짜 선택 + 소급 입력) -->
           <div style="background:var(--surface2);border-radius:var(--rsm);padding:14px;margin-bottom:12px;">
             <div style="font-size:11px;font-weight:500;color:var(--text2);margin-bottom:10px;">📝 날짜별 ADR/PDR 기록</div>
-            <!-- 날짜 -->
-            <div class="adr-inp-group" style="margin-bottom:10px;">
-              <span class="adr-inp-lbl">날짜 선택</span>
-              <input class="dinp" type="date" id="adr-date" style="font-size:12px;padding:6px 10px;width:100%;box-sizing:border-box;" onchange="onAdrDateChange()"/>
-            </div>
-            <!-- PDR / ADR 2열 -->
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+            <div class="adr-input-row">
               <div class="adr-inp-group">
-                <span class="adr-inp-lbl">🫧 PDR 용종 환자수<br/><span style="font-size:9px;color:var(--text3);">당일 바로 입력</span></span>
+                <span class="adr-inp-lbl">날짜 선택</span>
+                <input class="dinp" type="date" id="adr-date" style="font-size:12px;padding:6px 10px;" onchange="onAdrDateChange()"/>
+              </div>
+              <div class="adr-inp-group">
+                <span class="adr-inp-lbl">PDR 용종 환자수 <span style="font-size:9px;color:var(--text3);">(당일)</span></span>
                 <div class="adr-stepper">
                   <button class="adr-btn" onclick="adjAdr('pdr',-1)">−</button>
                   <input class="adr-inp" type="number" id="adr-pdr" value="0" min="0" oninput="updateAdrPreview()"/>
@@ -1089,7 +1091,7 @@ html,body{height:100%;font-family:'Noto Sans KR',sans-serif;background:var(--sb)
                 </div>
               </div>
               <div class="adr-inp-group">
-                <span class="adr-inp-lbl">🔬 ADR 선종 환자수<br/><span style="font-size:9px;color:var(--cfs-dark);">조직검사 후 소급</span></span>
+                <span class="adr-inp-lbl">ADR 선종/이형성증 환자수 <span style="font-size:9px;color:var(--cfs-dark);">(소급)</span></span>
                 <div class="adr-stepper">
                   <button class="adr-btn" onclick="adjAdr('adr',-1)">−</button>
                   <input class="adr-inp" type="number" id="adr-adr" value="0" min="0" oninput="updateAdrPreview()"/>
@@ -1098,8 +1100,8 @@ html,body{height:100%;font-family:'Noto Sans KR',sans-serif;background:var(--sb)
               </div>
             </div>
             <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
-              <div id="adr-preview" style="font-size:11px;color:var(--text3);line-height:1.6;margin-bottom:6px;word-break:keep-all;">날짜를 선택하면 해당일 CFS 건수가 표시됩니다</div>
-              <button class="adr-save-btn" onclick="saveAdrData()" style="width:100%;justify-content:center;padding:10px;">💾 ADR/PDR 저장</button>
+              <div id="adr-preview" style="font-size:11px;color:var(--text3);">날짜를 선택하면 해당일 CFS 건수가 표시됩니다</div>
+              <button class="adr-save-btn" onclick="saveAdrData()">저장</button>
             </div>
           </div>
 
@@ -1131,7 +1133,7 @@ html,body{height:100%;font-family:'Noto Sans KR',sans-serif;background:var(--sb)
           <div class="hhd">
             <div style="display:flex;align-items:center;gap:10px;">
               <div class="htitle">일별 기록</div>
-              <span id="hist-count" style="font-size:10px;color:var(--text3);"></span>
+              <span id="hist-count" style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;"></span>
             </div>
             <div style="display:flex;align-items:center;gap:6px;">
               <select class="fsel" id="psel" onchange="renderHist()" style="font-size:11px;padding:4px 8px;">
