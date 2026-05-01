@@ -1255,8 +1255,8 @@ html,body{height:100%;font-family:'Noto Sans KR',sans-serif;background:var(--sb)
 
 
     <!-- ─── 질환 노트 ─── -->
-    <div id="page-notes">
-      <div id="nvlist" style="display:flex;flex-direction:column;height:100%;">
+    <div id="page-notes" style="display:none;">
+      <div id="nvlist" style="display:none;">
         <div class="ltopbar" style="display:flex;align-items:center;gap:10px;padding:12px 20px;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0;flex-wrap:wrap;">
           <div style="font-family:'DM Serif Display',serif;font-size:17px;color:var(--text);">질환 노트</div>
           <div style="display:flex;gap:7px;margin-left:8px;">
@@ -1337,8 +1337,8 @@ html,body{height:100%;font-family:'Noto Sans KR',sans-serif;background:var(--sb)
     </div>
 
     <!-- ─── Daily Journal ─── -->
-    <div id="page-journal">
-      <div id="jvlist" style="display:flex;flex-direction:column;height:100%;">
+    <div id="page-journal" style="display:none;">
+      <div id="jvlist" style="display:none;">
         <div style="display:flex;align-items:center;gap:10px;padding:12px 20px;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0;flex-wrap:wrap;">
           <div style="font-family:'DM Serif Display',serif;font-size:17px;color:var(--text);">Daily Journal</div>
           <div style="display:flex;align-items:center;gap:7px;flex:1;max-width:380px;">
@@ -1445,8 +1445,8 @@ html,body{height:100%;font-family:'Noto Sans KR',sans-serif;background:var(--sb)
     </div>
 
     <!-- ─── 법적분쟁 케이스 ─── -->
-    <div id="page-legal">
-      <div id="lvlist" style="display:flex;flex-direction:column;height:100%;">
+    <div id="page-legal" style="display:none;">
+      <div id="lvlist" style="display:none;">
         <div style="display:flex;align-items:center;gap:10px;padding:12px 20px;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0;flex-wrap:wrap;">
           <div style="font-family:'DM Serif Display',serif;font-size:17px;color:var(--text);">법적분쟁 케이스</div>
           <div class="sbox" style="flex:1;max-width:280px;position:relative;">
@@ -1672,19 +1672,37 @@ function getMonthTarget(ym){var mo=parseInt(ym.slice(5,7));if(incSettings.monthl
 //  PAGE SWITCH
 // ══════════════════════════════════
 function goPage(p) {
-  ['counter','cases','notes','journal','legal'].forEach(id => {
-    const el = document.getElementById('page-'+id);
-    if(el) el.classList.toggle('on', id===p);
+  ['counter','cases','notes','journal','legal'].forEach(function(id) {
+    var el = document.getElementById('page-'+id);
+    if (!el) return;
+    if (id === p) {
+      el.classList.add('on');
+      el.style.display = '';
+    } else {
+      el.classList.remove('on');
+      el.style.display = 'none';
+    }
   });
-  ['cnt','cas','notes','journal','legal'].forEach(id => {
-    const key = id==='cnt'?'counter':id==='cas'?'cases':id;
-    document.getElementById('nav-'+id)?.classList.toggle('on', key===p);
-    document.getElementById('mnav-'+id)?.classList.toggle('on', key===p);
+  ['cnt','cas','notes','journal','legal'].forEach(function(id) {
+    var key = id==='cnt'?'counter':id==='cas'?'cases':id;
+    var n = document.getElementById('nav-'+id); if(n) n.classList.toggle('on', key===p);
+    var m = document.getElementById('mnav-'+id); if(m) m.classList.toggle('on', key===p);
   });
-  // 각 페이지 진입시 목록 상태로 초기화
-  if(p==='notes') showNoteList();
-  if(p==='journal') showJournalList();
-  if(p==='legal') showLegalList();
+  if (p==='notes') {
+    var l=document.getElementById('nvlist');
+    if(l){l.style.display='flex';l.style.flexDirection='column';l.style.height='100%';}
+    ['nvdetail','nvform'].forEach(function(id){var e=document.getElementById(id);if(e)e.style.display='none';});
+  }
+  if (p==='journal') {
+    var l=document.getElementById('jvlist');
+    if(l){l.style.display='flex';l.style.flexDirection='column';l.style.height='100%';}
+    ['jvdetail','jvform'].forEach(function(id){var e=document.getElementById(id);if(e)e.style.display='none';});
+  }
+  if (p==='legal') {
+    var l=document.getElementById('lvlist');
+    if(l){l.style.display='flex';l.style.flexDirection='column';l.style.height='100%';}
+    ['lvdetail','lvform'].forEach(function(id){var e=document.getElementById(id);if(e)e.style.display='none';});
+  }
 }
 
 // ══════════════════════════════════
