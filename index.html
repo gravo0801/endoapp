@@ -240,6 +240,76 @@ function refreshAdrUI() {
       +'<td>'+totalAdr+'</td><td>'+rateHTML(adrPct)+'</td>'
       +'</tr>';
   }
+  refreshAdrTrend();
+}
+
+function getMonthlyAdrStats(monthsBack) {
+  monthsBack = monthsBack || 12;
+  var stats = {};
+  allDays.forEach(function(d){
+    var ym = d.month || (d.key ? d.key.slice(0,7) : null);
+    if (!ym) return;
+    if (!stats[ym]) stats[ym] = {month:ym, cfs:0, pdr:0, adr:0, hasData:false};
+    stats[ym].cfs += d.cfs || 0;
+    if (d.pdr != null) { stats[ym].pdr += d.pdr; stats[ym].hasData = true; }
+    if (d.adr != null) { stats[ym].adr += d.adr; stats[ym].hasData = true; }
+  });
+  return Object.keys(stats).map(function(k){return stats[k];})
+    .filter(function(s){return s.hasData || s.cfs>0;})
+    .sort(function(a,b){return b.month.localeCompare(a.month);})
+    .slice(0, monthsBack);
+}
+
+function refreshAdrTrend() {
+  var sel = document.getElementById('adr-trend-range');
+  var n = sel ? +sel.value : 12;
+  var rowsDesc = getMonthlyAdrStats(n);
+  var tbody = document.getElementById('adr-trend-tbody');
+  var empty = document.getElementById('adr-trend-empty');
+  var chart = document.getElementById('adr-trend-chart');
+  if (!rowsDesc.length) {
+    if (tbody) tbody.innerHTML = '';
+    if (chart) chart.innerHTML = '';
+    if (empty) empty.style.display = 'block';
+    return;
+  }
+  if (empty) empty.style.display = 'none';
+  if (tbody) tbody.innerHTML = rowsDesc.map(function(r){
+    var pdrPct = calcRate(r.pdr, r.cfs);
+    var adrPct = calcRate(r.adr, r.cfs);
+    return '<tr><td>'+r.month+'</td><td>'+r.cfs+'</td>'
+      +'<td>'+(r.cfs>0?r.pdr:'-')+'</td><td>'+rateHTML(pdrPct)+'</td>'
+      +'<td>'+(r.cfs>0?r.adr:'-')+'</td><td>'+rateHTML(adrPct)+'</td></tr>';
+  }).join('');
+  // 차트 (오래된→최신)
+  var rowsAsc = rowsDesc.slice().reverse();
+  var pcts = [];
+  rowsAsc.forEach(function(r){
+    var p = calcRate(r.pdr, r.cfs); var a = calcRate(r.adr, r.cfs);
+    if (p!=null) pcts.push(p);
+    if (a!=null) pcts.push(a);
+  });
+  var maxVal = Math.max.apply(null, pcts.concat([30]));
+  var H = 100;
+  if (chart) chart.innerHTML = '<div style="display:flex;align-items:flex-end;gap:6px;height:'+(H+24)+'px;padding:0 4px;border-bottom:1px solid var(--border);">'
+    + rowsAsc.map(function(r){
+        var pdrPct = calcRate(r.pdr, r.cfs);
+        var adrPct = calcRate(r.adr, r.cfs);
+        var ph = pdrPct!=null ? Math.max(Math.round(pdrPct/maxVal*H),2) : 0;
+        var ah = adrPct!=null ? Math.max(Math.round(adrPct/maxVal*H),2) : 0;
+        return '<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;min-width:0;">'
+          +'<div style="display:flex;gap:2px;align-items:flex-end;height:'+H+'px;">'
+            +'<div title="PDR '+(pdrPct!=null?pdrPct.toFixed(1)+"%":"-")+'" style="width:10px;height:'+ph+'px;background:var(--egd);border-radius:2px 2px 0 0;"></div>'
+            +'<div title="ADR '+(adrPct!=null?adrPct.toFixed(1)+"%":"-")+'" style="width:10px;height:'+ah+'px;background:var(--cfs);border-radius:2px 2px 0 0;"></div>'
+          +'</div>'
+          +'<div style="font-size:9px;color:var(--text3);white-space:nowrap;">'+r.month.slice(2)+'</div>'
+        +'</div>';
+      }).join('')
+    + '</div>'
+    + '<div style="display:flex;gap:12px;justify-content:center;font-size:10px;color:var(--text2);margin-top:6px;">'
+      +'<span><span style="display:inline-block;width:8px;height:8px;background:var(--egd);border-radius:2px;vertical-align:middle;"></span> PDR%</span>'
+      +'<span><span style="display:inline-block;width:8px;height:8px;background:var(--cfs);border-radius:2px;vertical-align:middle;"></span> ADR%</span>'
+    +'</div>';
 }
 
 </script>
@@ -1245,6 +1315,28 @@ html,body{height:100%;font-family:'Noto Sans KR',sans-serif;background:var(--sb)
             </table>
           </div>
           <div id="adr-empty" style="display:none;text-align:center;padding:20px;font-size:12px;color:var(--text3);">기록이 없습니다.</div>
+
+          <!-- 월별 추이 (테이블 + 차트) -->
+          <div style="margin-top:16px;border-top:1px solid var(--border);padding-top:14px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px;">
+              <div style="font-size:13px;font-weight:500;">📈 월별 추이</div>
+              <select id="adr-trend-range" onchange="refreshAdrTrend()" style="font-size:11px;padding:4px 8px;border-radius:6px;border:1px solid var(--border);background:var(--surface);">
+                <option value="6">최근 6개월</option>
+                <option value="12" selected>최근 12개월</option>
+                <option value="24">최근 24개월</option>
+              </select>
+            </div>
+            <div id="adr-trend-chart" style="margin-bottom:12px;"></div>
+            <div style="overflow-x:auto;max-height:240px;overflow-y:auto;">
+              <table class="adr-stat-table">
+                <thead style="position:sticky;top:0;background:var(--surface);z-index:1;">
+                  <tr><th>월</th><th>CFS</th><th>PDR수</th><th>PDR%</th><th>ADR수</th><th>ADR%</th></tr>
+                </thead>
+                <tbody id="adr-trend-tbody"></tbody>
+              </table>
+            </div>
+            <div id="adr-trend-empty" style="display:none;text-align:center;padding:16px;font-size:12px;color:var(--text3);">기록이 없습니다.</div>
+          </div>
         </div>
 
         <div class="ai-card" id="ai-analysis-card" style="display:none;margin-top:16px;">
