@@ -771,6 +771,11 @@ html,body{height:100%;font-family:'Noto Sans KR',sans-serif;background:var(--sb)
 .tag-filter-wrap{display:flex;align-items:center;gap:5px;flex-wrap:wrap;}
 .tag-filter-chip{font-size:10px;padding:3px 10px;border-radius:12px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);cursor:pointer;transition:all 0.12s;white-space:nowrap;}
 .tag-filter-chip.on{background:var(--egd-bg);color:var(--egd-dark);border-color:var(--egd-light);}
+.diag-suggest{position:absolute;top:100%;left:0;right:0;background:var(--surface);border:1px solid var(--border);border-radius:var(--rsm);box-shadow:0 4px 12px rgba(0,0,0,.08);z-index:10;display:none;max-height:200px;overflow-y:auto;margin-top:2px;}
+.diag-suggest.show{display:block;}
+.diag-item{padding:8px 12px;font-size:12px;cursor:pointer;border-bottom:1px solid var(--border);}
+.diag-item:hover{background:var(--surface2);}
+.diag-item:last-child{border-bottom:none;}
 .filter-divider{width:1px;height:16px;background:var(--border);flex-shrink:0;}
 .filter-clear{font-size:11px;color:var(--text3);cursor:pointer;padding:4px 8px;border-radius:var(--rsm);}
 .filter-clear:hover{color:var(--red);}
@@ -1388,6 +1393,13 @@ html,body{height:100%;font-family:'Noto Sans KR',sans-serif;background:var(--sb)
           </div>
           <button class="chip" style="margin-left:auto;flex-shrink:0;" onclick="showForm()">+ 추가</button>
         </div>
+        <div class="disease-filter-bar" id="disease-filter-bar" style="display:none;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+            <span style="font-size:11px;color:var(--text2);font-weight:500;">🔍 질환별 보기</span>
+            <span class="filter-clear" id="case-filter-clear" onclick="clearCaseFilters()" style="display:none;">✕ 초기화</span>
+          </div>
+          <div class="disease-filter-scroll" id="disease-chips"></div>
+        </div>
         <div class="cstrip">
           <div class="css"><div class="csdot" style="background:var(--text3)"></div><div><div class="csn" id="cst">0</div><div class="cslbl">전체</div></div></div>
           <div class="css"><div class="csdot" style="background:var(--egd)"></div><div><div class="csn" id="cse">0</div><div class="cslbl">위내시경</div></div></div>
@@ -1423,7 +1435,7 @@ html,body{height:100%;font-family:'Noto Sans KR',sans-serif;background:var(--sb)
               <div class="fg"><label class="fl">카테고리 <span class="freq">*</span></label><select class="fsel" id="f-cat"><option value="EGD">위내시경 (EGD)</option><option value="CFS">대장내시경 (CFS)</option></select></div>
               <div class="fg"><label class="fl">시술일</label><input class="fi" type="date" id="f-date"/></div>
             </div>
-            <div class="fg"><label class="fl">소견명 / 진단명 <span class="freq">*</span></label><input class="fi" id="f-name" placeholder="조기위암 (EGC IIc), 선종성 용종…"/></div>
+            <div class="fg" style="position:relative;"><label class="fl">소견명 / 진단명 <span class="freq">*</span></label><input class="fi" id="f-name" placeholder="조기위암 (EGC IIc), 선종성 용종…" oninput="showDiagSuggest(this.value)" onblur="setTimeout(hideDiagSuggest,150)" autocomplete="off"/><div class="diag-suggest" id="diag-suggest"></div></div>
             <div class="frow2">
               <div class="fg"><label class="fl">영문 소견명</label><input class="fi" id="f-eng" placeholder="Early Gastric Cancer IIc"/></div>
               <div class="fg"><label class="fl">소견 위치</label><input class="fi" id="f-loc" placeholder="위 전정부 소만측, S상결장 20cm"/></div>
@@ -1971,6 +1983,7 @@ async function loadAllCases() {
   const snap = await casesCol(currentUid).orderBy('date','desc').get();
   allCases = snap.docs.map(d => ({...d.data(), id: d.id, photos:[]}));
   renderCaseStats(); renderCaseGrid();
+  buildDiseaseFilters();
   document.getElementById('sb-cases').textContent = allCases.length + '건';
   // 썸네일 비동기 로드
   for (const c of allCases) {
@@ -1999,6 +2012,7 @@ function getFiltCases() {
     if (cFilter==='EGD' && c.cat!=='EGD') return false;
     if (cFilter==='CFS' && c.cat!=='CFS') return false;
     if (cFilter==='TR'  && c.transfer!=='yes') return false;
+    if (caseDiseaseFilter && c.name !== caseDiseaseFilter) return false;
     if (cSearch) {
       const q = cSearch.toLowerCase();
       const hay = [(c.name||''),(c.nameEng||''),(c.loc||''),(c.tags||[]).join(' ')].join(' ').toLowerCase();
