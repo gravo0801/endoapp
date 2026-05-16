@@ -345,8 +345,10 @@ html,body{height:100%;font-family:'Noto Sans KR',sans-serif;background:var(--sb)
 .login-sub{font-size:12px;color:rgba(255,255,255,0.4);margin-bottom:28px;line-height:1.7;}
 .btn-google{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:13px;background:#fff;border:none;border-radius:var(--r);font-size:14px;font-weight:500;color:#3C3A30;cursor:pointer;font-family:'Noto Sans KR',sans-serif;transition:opacity 0.15s;}
 .btn-google:hover{opacity:0.88;}
+.btn-google:disabled{opacity:0.6;cursor:wait;}
 .btn-google svg{width:18px;height:18px;flex-shrink:0;}
 .login-note{font-size:11px;color:rgba(255,255,255,0.25);margin-top:14px;line-height:1.7;}
+.login-uid{font-family:'DM Mono',monospace;font-size:10px;color:rgba(255,255,255,0.38);word-break:break-all;margin-top:8px;line-height:1.5;}
 
 /* ── APP SHELL ── */
 .shell{display:flex;height:100vh;overflow:hidden;}
@@ -749,6 +751,36 @@ html,body{height:100%;font-family:'Noto Sans KR',sans-serif;background:var(--sb)
 .target-lbl{font-size:11px;color:var(--text2);min-width:70px;flex-shrink:0;}
 .target-inp{flex:1;padding:7px 10px;border:1px solid var(--border);border-radius:var(--rsm);font-size:13px;font-family:'DM Mono',monospace;background:var(--surface2);color:var(--text);outline:none;}
 .target-inp:focus{border-color:var(--egd);}
+.goal-planner{margin-top:14px;padding-top:14px;border-top:1px solid var(--border);}
+.goal-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;flex-wrap:wrap;}
+.goal-title{font-size:12px;font-weight:600;color:var(--text);}
+.goal-sub{font-size:10px;color:var(--text3);line-height:1.6;}
+.goal-settings{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:12px;}
+.goal-box{background:var(--surface2);border:1px solid var(--border);border-radius:var(--rsm);padding:10px;}
+.goal-box-title{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px;}
+.goal-inline{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.goal-input{width:68px;padding:6px 8px;border:1px solid var(--border);border-radius:var(--rsm);background:var(--surface);font-family:'DM Mono',monospace;font-size:12px;color:var(--text);outline:none;}
+.goal-date{padding:6px 8px;border:1px solid var(--border);border-radius:var(--rsm);background:var(--surface);font-size:12px;color:var(--text);outline:none;}
+.goal-select{padding:6px 8px;border:1px solid var(--border);border-radius:var(--rsm);background:var(--surface);font-size:12px;color:var(--text);outline:none;}
+.goal-check{display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--text2);white-space:nowrap;}
+.goal-check input{accent-color:var(--egd-dark);}
+.goal-week-table{display:grid;gap:6px;}
+.goal-week-row{display:grid;grid-template-columns:88px 1fr auto;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--rsm);padding:7px 8px;}
+.goal-week-label{font-size:11px;font-weight:600;color:var(--text);}
+.goal-week-days{display:flex;gap:8px;flex-wrap:wrap;}
+.goal-week-reset{font-size:10px;border:1px solid var(--border);border-radius:999px;background:var(--surface2);color:var(--text3);padding:4px 8px;cursor:pointer;white-space:nowrap;}
+.goal-week-reset:hover{color:var(--text);border-color:var(--border2);}
+.goal-summary{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;margin-bottom:10px;}
+.goal-metric{background:var(--surface2);border:1px solid var(--border);border-radius:var(--rsm);padding:9px 8px;}
+.goal-metric-label{font-size:10px;color:var(--text3);margin-bottom:4px;}
+.goal-metric-value{font-family:'DM Mono',monospace;font-size:16px;font-weight:600;color:var(--text);}
+.goal-metric-value.accent{color:var(--egd-dark);}
+.goal-list{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;}
+.goal-chip{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--border);border-radius:999px;background:var(--surface);padding:5px 8px;font-size:10px;color:var(--text2);}
+.goal-chip.off{opacity:.65;text-decoration:line-through;}
+.goal-chip button{border:none;background:transparent;color:var(--text3);cursor:pointer;font-size:12px;line-height:1;padding:0;}
+.goal-action{font-size:11px;padding:6px 10px;border-radius:var(--rsm);background:var(--egd-bg);border:1px solid var(--egd-light);color:var(--egd-dark);cursor:pointer;}
+.goal-action.secondary{background:var(--surface2);border-color:var(--border);color:var(--text2);}
 .month-nav{display:flex;align-items:center;gap:8px;}
 .month-nav-btn{width:30px;height:30px;border:1px solid var(--border);border-radius:var(--rsm);background:var(--surface2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--text2);transition:all 0.12s;}
 .month-nav-btn:hover{border-color:var(--border2);color:var(--text);}
@@ -884,6 +916,8 @@ html,body{height:100%;font-family:'Noto Sans KR',sans-serif;background:var(--sb)
   .inc-stats-row{grid-template-columns:repeat(2,1fr);}
   .inc-grid{grid-template-columns:repeat(2,1fr);}
   .target-grid{grid-template-columns:1fr;}
+  .goal-settings{grid-template-columns:1fr;}
+  .goal-summary{grid-template-columns:repeat(2,minmax(0,1fr));}
   .cpanel{display:none;}
   .adr-input-row{grid-template-columns:1fr!important;}
   .adr-save-btn{width:100%!important;}
@@ -1047,8 +1081,11 @@ html,body{height:100%;font-family:'Noto Sans KR',sans-serif;background:var(--sb)
         </div>
         <div style="margin-left:auto;display:flex;gap:7px;flex-wrap:wrap;">
           <button class="chip" onclick="toggleTargetEdit()">⚙ 목표</button>
-          <button class="chip" onclick="runAIAnalysis()">🤖 AI 분석</button>
+          <button class="chip" onclick="runAIAnalysis()">📌 목표 분석</button>
           <button class="chip" onclick="exportCSV()">CSV</button>
+          <button class="chip" onclick="exportFullBackup()">JSON 백업</button>
+          <button class="chip" onclick="document.getElementById('json-restore-file').click()">JSON 복원</button>
+          <input id="json-restore-file" type="file" accept="application/json,.json" style="display:none" onchange="importFullBackup(event)"/>
         </div>
       </div>
       <div class="inc-scroll">
@@ -1074,6 +1111,74 @@ html,body{height:100%;font-family:'Noto Sans KR',sans-serif;background:var(--sb)
             <button onclick="setAllTargets(1300)" style="font-size:11px;padding:4px 10px;border-radius:var(--rsm);background:var(--surface2);border:1px solid var(--border);cursor:pointer;">전체 1300p</button>
             <button onclick="setHalfTargets()" style="font-size:11px;padding:4px 10px;border-radius:var(--rsm);background:var(--egd-bg);border:1px solid var(--egd-light);color:var(--egd-dark);cursor:pointer;">상/하반기 분리</button>
           </div>
+          <div class="goal-planner">
+            <div class="goal-head">
+              <div>
+                <div class="goal-title">추천 목표 계산</div>
+                <div class="goal-sub">공휴일, 토요일 규칙, 휴가, 오전/오후 세션 기준으로 현재 선택 월의 목표를 계산합니다.</div>
+              </div>
+              <div class="goal-inline">
+                <button class="goal-action" onclick="applySuggestedTarget()">현재 월 적용</button>
+                <button class="goal-action secondary" onclick="applyYearSuggestedTargets()">올해 전체 적용</button>
+              </div>
+            </div>
+            <div class="goal-settings">
+              <div class="goal-box">
+                <div class="goal-box-title">세션 예상 점수</div>
+                <div class="goal-inline">
+                  <span class="goal-check">오전 <input class="goal-input" id="wg-am-point" type="number" min="0" step="0.5" value="40" onchange="saveWorkGoalSettings()"/>p</span>
+                  <span class="goal-check">오후 <input class="goal-input" id="wg-pm-point" type="number" min="0" step="0.5" value="13" onchange="saveWorkGoalSettings()"/>p</span>
+                </div>
+              </div>
+              <div class="goal-box">
+                <div class="goal-box-title">기본 오후근무 요일</div>
+                <div class="goal-inline" id="wg-pm-days">
+                  <label class="goal-check"><input type="checkbox" value="1" onchange="saveWorkGoalSettings()"/>월</label>
+                  <label class="goal-check"><input type="checkbox" value="2" onchange="saveWorkGoalSettings()" checked/>화</label>
+                  <label class="goal-check"><input type="checkbox" value="4" onchange="saveWorkGoalSettings()" checked/>목</label>
+                  <label class="goal-check"><input type="checkbox" value="5" onchange="saveWorkGoalSettings()"/>금</label>
+                </div>
+                <div class="goal-sub" style="margin-top:6px;">주차별 설정이 없는 주에만 적용됩니다.</div>
+              </div>
+              <div class="goal-box" style="grid-column:1 / -1;">
+                <div class="goal-box-title">이번 달 주차별 오후근무</div>
+                <div class="goal-sub" style="margin-bottom:8px;">매주 오후근무 요일이 다르면 여기서 주차별로 체크하세요. 수요일·토요일은 오전근무 기준으로 둡니다.</div>
+                <div class="goal-week-table" id="wg-pm-weekly"></div>
+              </div>
+              <div class="goal-box">
+                <div class="goal-box-title">휴가 등록</div>
+                <div class="goal-inline">
+                  <input class="goal-date" id="wg-vacation-date" type="date"/>
+                  <button class="goal-action secondary" onclick="addVacationDate()">추가</button>
+                </div>
+                <div class="goal-list" id="wg-vacation-list"></div>
+              </div>
+              <div class="goal-box">
+                <div class="goal-box-title">공휴일 추가/삭제</div>
+                <div class="goal-inline">
+                  <input class="goal-date" id="wg-holiday-date" type="date"/>
+                  <input class="goal-date" id="wg-holiday-name" type="text" placeholder="휴일명" style="width:110px;"/>
+                  <button class="goal-action secondary" onclick="addHolidayOverride()">추가</button>
+                </div>
+                <div class="goal-list" id="wg-holiday-list"></div>
+              </div>
+              <div class="goal-box" style="grid-column:1 / -1;">
+                <div class="goal-box-title">날짜별 근무 수정</div>
+                <div class="goal-inline">
+                  <input class="goal-date" id="wg-override-date" type="date"/>
+                  <select class="goal-select" id="wg-override-type">
+                    <option value="off">휴무</option>
+                    <option value="am">오전근무</option>
+                    <option value="full">오전+오후</option>
+                  </select>
+                  <button class="goal-action secondary" onclick="addWorkdayOverride()">적용</button>
+                </div>
+                <div class="goal-list" id="wg-override-list"></div>
+              </div>
+            </div>
+            <div class="goal-summary" id="wg-summary"></div>
+            <div class="goal-sub" id="wg-summary-note"></div>
+          </div>
           <div style="font-size:10px;color:var(--text3);line-height:1.7;">등급: EX≥110% / VG≥100% / GD≥90% / NI≥80%</div>
         </div>
         <!-- PTS Hero -->
@@ -1096,7 +1201,7 @@ html,body{height:100%;font-family:'Noto Sans KR',sans-serif;background:var(--sb)
         <div class="inc-stats-row">
           <div class="inc-stat"><div class="inc-stat-lbl">📅 오늘 점수</div><div class="inc-stat-val" id="is-today">0</div><div class="inc-stat-sub">포인트</div></div>
           <div class="inc-stat"><div class="inc-stat-lbl">📈 일 평균</div><div class="inc-stat-val" id="is-avg">0</div><div class="inc-stat-sub">포인트/일</div></div>
-          <div class="inc-stat"><div class="inc-stat-lbl">🎯 일일 목표</div><div class="inc-stat-val" id="is-daily-goal">0</div><div class="inc-stat-sub">남은 평일 기준</div></div>
+          <div class="inc-stat"><div class="inc-stat-lbl">🎯 일일 목표</div><div class="inc-stat-val" id="is-daily-goal">0</div><div class="inc-stat-sub">남은 실근무 기준</div></div>
           <div class="inc-stat"><div class="inc-stat-lbl">📊 이번 주</div><div class="inc-stat-val" id="is-week">0</div><div class="inc-stat-sub">포인트</div></div>
         </div>
         <!-- 4개 누적 시술 스탯 -->
@@ -1246,7 +1351,7 @@ html,body{height:100%;font-family:'Noto Sans KR',sans-serif;background:var(--sb)
           </div>
           <div class="chart-wrap"><div class="chart-grid" id="chartGrid"></div><div class="chart-bars" id="miniChart"></div></div>
         </div>
-        <!-- AI 분석 -->
+        <!-- 목표 분석 -->
 
         <!-- ADR/PDR 통계 -->
         <div class="adr-section" style="margin-top:16px;">
@@ -1345,7 +1450,7 @@ html,body{height:100%;font-family:'Noto Sans KR',sans-serif;background:var(--sb)
         </div>
 
         <div class="ai-card" id="ai-analysis-card" style="display:none;margin-top:16px;">
-          <div class="ai-card-title"><svg width="14" height="14" viewBox="0 0 14 14"><circle cx="7" cy="7" r="6" fill="var(--bxc-dark)" opacity="0.2"/><path d="M7 4v3.5l2 1.5" stroke="var(--bxc-dark)" stroke-width="1.3" stroke-linecap="round"/></svg> AI 분석</div>
+          <div class="ai-card-title"><svg width="14" height="14" viewBox="0 0 14 14"><circle cx="7" cy="7" r="6" fill="var(--bxc-dark)" opacity="0.2"/><path d="M7 4v3.5l2 1.5" stroke="var(--bxc-dark)" stroke-width="1.3" stroke-linecap="round"/></svg> 목표 분석</div>
           <div class="ai-content" id="ai-text"></div>
         </div>
         <!-- 일별 기록 -->
@@ -1833,9 +1938,10 @@ const notesCol    = uid => db.collection('users').doc(uid).collection('notes');
 const journalCol  = uid => db.collection('users').doc(uid).collection('journal');
 const legalCol    = uid => db.collection('users').doc(uid).collection('legal');
 const settingsRef = uid => db.collection('users').doc(uid).collection('settings').doc('incentive');
+const userRootRef = uid => db.collection('users').doc(uid);
 
 // ══════════════════════════════════
-//  AUTH
+//  AUTH (비밀번호 방식)
 // ══════════════════════════════════
 let currentUid = null;
 
@@ -1866,7 +1972,6 @@ if (sessionStorage.getItem('endo-auth') === '1') {
     document.getElementById('sb-uname').textContent = '내 계정';
     init();
   };
-  // 스크립트가 </body> 직전 → DOM 이미 준비됨 → 바로 실행
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', _doAutoLogin);
   } else {
@@ -1904,6 +2009,34 @@ let incDays = [];
 const POINT = { egd:1, cfs:2, bxe:0.5, bxc:0.5, cpp:1, clo:0.5 };
 const GRADE_H1 = [{g:'EX',min:1100,amt:'250만'},{g:'VG',min:1000,amt:'200만'},{g:'GD',min:900,amt:'150만'},{g:'NI',min:800,amt:'100만'},{g:'UN',min:0,amt:'50만'}];
 const GRADE_H2 = [{g:'EX',min:1300,amt:'250만'},{g:'VG',min:1200,amt:'200만'},{g:'GD',min:1100,amt:'150만'},{g:'NI',min:1000,amt:'100만'},{g:'UN',min:0,amt:'50만'}];
+const DEFAULT_WORK_GOAL = { amPoint:40, pmPoint:13, pmDays:[2,4], roundTo:10 };
+const BUILT_IN_HOLIDAYS = {
+  2026: {
+    '2026-01-01':'신정',
+    '2026-02-16':'설날 연휴',
+    '2026-02-17':'설날',
+    '2026-02-18':'설날 연휴',
+    '2026-03-01':'삼일절',
+    '2026-03-02':'삼일절 대체공휴일',
+    '2026-05-01':'근로자의 날',
+    '2026-05-05':'어린이날',
+    '2026-05-24':'부처님오신날',
+    '2026-05-25':'부처님오신날 대체공휴일',
+    '2026-06-03':'전국동시지방선거',
+    '2026-06-06':'현충일',
+    '2026-08-15':'광복절',
+    '2026-08-17':'광복절 대체공휴일',
+    '2026-09-24':'추석 연휴',
+    '2026-09-25':'추석',
+    '2026-09-26':'추석 연휴',
+    '2026-10-03':'개천절',
+    '2026-10-05':'개천절 대체공휴일',
+    '2026-10-09':'한글날',
+    '2026-12-25':'성탄절'
+  }
+};
+const APP_BUILD = '2026-05-17-auth-redirect-v2';
+const PM_DAY_LABELS = {1:'월',2:'화',4:'목',5:'금'};
 
 function getMonthTarget(ym){ var mo=parseInt(ym.slice(5,7)); if(incSettings.monthly&&incSettings.monthly[mo])return incSettings.monthly[mo]; return mo>=7?(incSettings.h2||1300):(incSettings.h1||1000); }
 function getGrade(pts,ym){ const g=parseInt(ym.slice(5,7))>=7?GRADE_H2:GRADE_H1; return g.find(x=>pts>=x.min)||g[g.length-1]; }
@@ -2569,22 +2702,408 @@ function exportCSV() {
   const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8;'}));a.download=`EndoCount_${TODAY}.csv`;a.click();
   toast('CSV 다운로드 완료');
 }
+function downloadBlob(name,content,type){
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([content],{type}));
+  a.download=name;
+  a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+}
+function encodeBackupValue(v){
+  if(v&&typeof v.toDate==='function'&&typeof v.seconds==='number')return{__type:'timestamp',seconds:v.seconds,nanoseconds:v.nanoseconds||0};
+  if(Array.isArray(v))return v.map(encodeBackupValue);
+  if(v&&typeof v==='object'){
+    const out={};
+    Object.keys(v).forEach(k=>out[k]=encodeBackupValue(v[k]));
+    return out;
+  }
+  return v;
+}
+function decodeBackupValue(v){
+  if(v&&v.__type==='timestamp'&&typeof v.seconds==='number')return new firebase.firestore.Timestamp(v.seconds,v.nanoseconds||0);
+  if(Array.isArray(v))return v.map(decodeBackupValue);
+  if(v&&typeof v==='object'){
+    const out={};
+    Object.keys(v).forEach(k=>out[k]=decodeBackupValue(v[k]));
+    return out;
+  }
+  return v;
+}
+async function readBackupCollection(uid,name){
+  const snap=await userRootRef(uid).collection(name).get();
+  return snap.docs.map(d=>({id:d.id,data:encodeBackupValue(d.data())}));
+}
+async function readBackupCases(uid){
+  const snap=await casesCol(uid).get();
+  const cases=[];
+  for(const d of snap.docs){
+    const photos=await casesCol(uid).doc(d.id).collection('photos').get();
+    cases.push({id:d.id,data:encodeBackupValue(d.data()),photos:photos.docs.map(p=>({id:p.id,data:encodeBackupValue(p.data())}))});
+  }
+  return cases;
+}
+async function exportFullBackup(){
+  if(!currentUid){toast('로그인 후 백업할 수 있습니다.');return;}
+  try{
+    toast('전체 JSON 백업 생성 중...');
+    const backup={
+      meta:{app:'EndoApp',version:'security-backup-v1',exportedAt:new Date().toISOString(),uid:currentUid},
+      days:await readBackupCollection(currentUid,'days'),
+      cases:await readBackupCases(currentUid),
+      notes:await readBackupCollection(currentUid,'notes'),
+      journal:await readBackupCollection(currentUid,'journal'),
+      legal:await readBackupCollection(currentUid,'legal'),
+      settings:await readBackupCollection(currentUid,'settings')
+    };
+    downloadBlob(`EndoApp_Backup_${TODAY}.json`,JSON.stringify(backup,null,2),'application/json;charset=utf-8;');
+    toast('전체 JSON 백업 완료');
+  }catch(e){toast('백업 오류: '+e.message);}
+}
+async function restoreBackupCollection(uid,name,items){
+  let count=0;
+  for(const item of (items||[])){
+    if(!item.id||!item.data)continue;
+    await userRootRef(uid).collection(name).doc(item.id).set(decodeBackupValue(item.data),{merge:true});
+    count++;
+  }
+  return count;
+}
+async function restoreBackupCases(uid,cases){
+  let count=0;
+  for(const item of (cases||[])){
+    if(!item.id||!item.data)continue;
+    const ref=casesCol(uid).doc(item.id);
+    await ref.set(decodeBackupValue(item.data),{merge:true});
+    count++;
+    for(const p of (item.photos||[])){
+      if(!p.id||!p.data)continue;
+      await ref.collection('photos').doc(p.id).set(decodeBackupValue(p.data),{merge:true});
+      count++;
+    }
+  }
+  return count;
+}
+async function importFullBackup(ev){
+  const file=ev.target.files&&ev.target.files[0];
+  ev.target.value='';
+  if(!file)return;
+  if(!currentUid){toast('로그인 후 복원할 수 있습니다.');return;}
+  try{
+    const backup=JSON.parse(await file.text());
+    if(!backup.meta||backup.meta.app!=='EndoApp'){toast('EndoApp 백업 파일이 아닙니다.');return;}
+    const counts={
+      days:(backup.days||[]).length,
+      cases:(backup.cases||[]).length,
+      notes:(backup.notes||[]).length,
+      journal:(backup.journal||[]).length,
+      legal:(backup.legal||[]).length,
+      settings:(backup.settings||[]).length
+    };
+    const msg=`JSON 백업을 현재 계정에 병합 복원할까요?\n\n기록 ${counts.days}일 / 케이스 ${counts.cases}건 / 노트 ${counts.notes}건 / 저널 ${counts.journal}건 / 법적분쟁 ${counts.legal}건 / 설정 ${counts.settings}개\n\n기존 데이터는 삭제하지 않습니다.`;
+    if(!confirm(msg))return;
+    toast('JSON 복원 중...');
+    let restored=0;
+    restored+=await restoreBackupCollection(currentUid,'days',backup.days);
+    restored+=await restoreBackupCases(currentUid,backup.cases);
+    restored+=await restoreBackupCollection(currentUid,'notes',backup.notes);
+    restored+=await restoreBackupCollection(currentUid,'journal',backup.journal);
+    restored+=await restoreBackupCollection(currentUid,'legal',backup.legal);
+    restored+=await restoreBackupCollection(currentUid,'settings',backup.settings);
+    await loadAllDays();await loadAllCases();await loadAllNotes();await loadAllJournal();await loadAllLegal();await loadIncentiveSettings();
+    toast('JSON 복원 완료: '+restored+'개 문서');
+  }catch(e){toast('복원 오류: '+e.message);}
+}
 
 // ══ PTS functions ══
+function normalizeWorkGoalSettings(){
+  const rawGoal=incSettings.workGoal||{};
+  const hasPmDays=Array.isArray(rawGoal.pmDays);
+  const pmDays=hasPmDays?rawGoal.pmDays.map(Number).filter(d=>[1,2,4,5].includes(d)):DEFAULT_WORK_GOAL.pmDays;
+  incSettings.workGoal={
+    amPoint:+rawGoal.amPoint||DEFAULT_WORK_GOAL.amPoint,
+    pmPoint:+rawGoal.pmPoint||DEFAULT_WORK_GOAL.pmPoint,
+    pmDays:hasPmDays?pmDays:[...DEFAULT_WORK_GOAL.pmDays],
+    roundTo:+rawGoal.roundTo||DEFAULT_WORK_GOAL.roundTo,
+    pmWeekOverrides:rawGoal.pmWeekOverrides||{}
+  };
+  incSettings.vacations=Array.isArray(incSettings.vacations)?[...new Set(incSettings.vacations)].sort():[];
+  const h=incSettings.holidayOverrides||{};
+  incSettings.holidayOverrides={added:h.added||{},removed:Array.isArray(h.removed)?[...new Set(h.removed)]:[]};
+  incSettings.workdayOverrides=incSettings.workdayOverrides||{};
+}
+function isoDate(y,m,d){return y+'-'+String(m).padStart(2,'0')+'-'+String(d).padStart(2,'0');}
+function getWorkGoalSettings(){normalizeWorkGoalSettings();return incSettings.workGoal;}
+function getHolidayEntries(year,includeRemoved){
+  normalizeWorkGoalSettings();
+  const built=BUILT_IN_HOLIDAYS[year]||{};
+  const added=incSettings.holidayOverrides.added||{};
+  const removed=new Set(incSettings.holidayOverrides.removed||[]);
+  const out={};
+  Object.keys(built).forEach(k=>{if(k.startsWith(year+'-')&&(includeRemoved||!removed.has(k)))out[k]={name:built[k],builtIn:true,removed:removed.has(k)};});
+  Object.keys(added).forEach(k=>{if(k.startsWith(year+'-')&&(includeRemoved||!removed.has(k)))out[k]={name:added[k]||'사용자 공휴일',builtIn:false,removed:removed.has(k)};});
+  if(includeRemoved)removed.forEach(k=>{if(k.startsWith(year+'-')&&!out[k]&&built[k])out[k]={name:built[k],builtIn:true,removed:true};});
+  return out;
+}
+function getHolidayName(dateKey){
+  const y=+dateKey.slice(0,4);
+  const item=getHolidayEntries(y,false)[dateKey];
+  return item?item.name:'';
+}
+function getSaturdayOrdinal(d){return Math.floor((d.getDate()-1)/7)+1;}
+function getWeekOfMonth(d){return Math.floor((d.getDate()-1)/7)+1;}
+function getPmDaysForWeek(ym,weekNo){
+  const goal=getWorkGoalSettings();
+  const monthly=goal.pmWeekOverrides&&goal.pmWeekOverrides[ym];
+  if(monthly&&Object.prototype.hasOwnProperty.call(monthly,String(weekNo))){
+    return (monthly[String(weekNo)]||[]).map(Number).filter(d=>PM_DAY_LABELS[d]);
+  }
+  return goal.pmDays||[];
+}
+function getWorkSessionForDate(dateKey){
+  normalizeWorkGoalSettings();
+  const d=new Date(dateKey+'T00:00:00');
+  const dow=d.getDay(), month=d.getMonth()+1;
+  if((incSettings.vacations||[]).includes(dateKey))return{am:0,pm:0,type:'off',reason:'휴가'};
+  const override=incSettings.workdayOverrides&&incSettings.workdayOverrides[dateKey];
+  if(override==='off')return{am:0,pm:0,type:'off',reason:'수동 휴무'};
+  if(override==='am')return{am:1,pm:0,type:'am',reason:'수동 오전'};
+  if(override==='full')return{am:1,pm:1,type:'full',reason:'수동 풀근무'};
+  const holiday=getHolidayName(dateKey);
+  if(holiday)return{am:0,pm:0,type:'off',reason:holiday};
+  if(dow===0)return{am:0,pm:0,type:'off',reason:'일요일'};
+  if(dow===6){
+    const ord=getSaturdayOrdinal(d);
+    if(month<=6&&(ord===1||ord===3))return{am:0,pm:0,type:'off',reason:'상반기 1·3주 토요휴무'};
+    return{am:1,pm:0,type:'am',reason:'토요 오전'};
+  }
+  if(dow===3)return{am:1,pm:0,type:'am',reason:'수요일 오전'};
+  if(dow>=1&&dow<=5){
+    const hasPm=getPmDaysForWeek(dateKey.slice(0,7),getWeekOfMonth(d)).includes(dow);
+    return{am:1,pm:hasPm?1:0,type:hasPm?'full':'am',reason:hasPm?'오전+오후':'오전'};
+  }
+  return{am:0,pm:0,type:'off',reason:'휴무'};
+}
+function calculateMonthPlan(ym,opt){
+  opt=opt||{};
+  const y=+ym.slice(0,4), m=+ym.slice(5,7);
+  const daysInMonth=new Date(y,m,0).getDate();
+  const goal=getWorkGoalSettings();
+  const holidayEntries=getHolidayEntries(y,false);
+  const dates=[];
+  let workDays=0,amSessions=0,pmSessions=0,holidayCount=0,vacationCount=0,expected=0;
+  for(let day=1;day<=daysInMonth;day++){
+    const key=isoDate(y,m,day);
+    if(opt.fromDate&&key<opt.fromDate)continue;
+    if(opt.toDate&&key>opt.toDate)continue;
+    const session=getWorkSessionForDate(key);
+    const isHoliday=!!holidayEntries[key];
+    const isVacation=(incSettings.vacations||[]).includes(key);
+    if(isHoliday)holidayCount++;
+    if(isVacation)vacationCount++;
+    if(session.am||session.pm)workDays++;
+    amSessions+=session.am;pmSessions+=session.pm;
+    expected+=session.am*goal.amPoint+session.pm*goal.pmPoint;
+    dates.push({...session,key,isHoliday,isVacation,expected:session.am*goal.amPoint+session.pm*goal.pmPoint});
+  }
+  const roundTo=goal.roundTo||10;
+  const recommendedTarget=Math.round(expected/roundTo)*roundTo;
+  return{ym,workDays,amSessions,pmSessions,holidayCount,vacationCount,expected,recommendedTarget,dates};
+}
+function getRemainingWorkPlan(ym){
+  const cur=TODAY.slice(0,7);
+  if(ym<cur)return{workDays:0,amSessions:0,pmSessions:0,expected:0,dates:[]};
+  if(ym===cur){
+    const d=new Date(TODAY+'T00:00:00');d.setDate(d.getDate()+1);
+    return calculateMonthPlan(ym,{fromDate:isoDate(d.getFullYear(),d.getMonth()+1,d.getDate())});
+  }
+  return calculateMonthPlan(ym);
+}
+function syncWorkGoalInputs(){
+  const goal=getWorkGoalSettings();
+  const am=document.getElementById('wg-am-point'),pm=document.getElementById('wg-pm-point');
+  if(am)am.value=goal.amPoint;if(pm)pm.value=goal.pmPoint;
+  document.querySelectorAll('#wg-pm-days input[type="checkbox"]').forEach(cb=>{cb.checked=goal.pmDays.includes(+cb.value);});
+}
+function renderPmWeekPlanner(){
+  const wrap=document.getElementById('wg-pm-weekly');
+  if(!wrap||!incViewMonth)return;
+  const y=+incViewMonth.slice(0,4),m=+incViewMonth.slice(5,7);
+  const daysInMonth=new Date(y,m,0).getDate();
+  const weekCount=Math.ceil(daysInMonth/7);
+  const goal=getWorkGoalSettings();
+  const monthOverrides=(goal.pmWeekOverrides&&goal.pmWeekOverrides[incViewMonth])||{};
+  const rows=[];
+  for(let w=1;w<=weekCount;w++){
+    const start=(w-1)*7+1,end=Math.min(w*7,daysInMonth);
+    const hasOverride=Object.prototype.hasOwnProperty.call(monthOverrides,String(w));
+    const days=getPmDaysForWeek(incViewMonth,w);
+    const boxes=[1,2,4,5].map(d=>`<label class="goal-check"><input type="checkbox" data-week="${w}" value="${d}" ${days.includes(d)?'checked':''} onchange="savePmWeekOverride(${w})"/>${PM_DAY_LABELS[d]}</label>`).join('');
+    const reset=hasOverride?`<button class="goal-week-reset" onclick="clearPmWeekOverride(${w})">기본</button>`:`<span class="goal-sub">기본</span>`;
+    rows.push(`<div class="goal-week-row"><div class="goal-week-label">${w}주차<br><span class="goal-sub">${start}-${end}일</span></div><div class="goal-week-days">${boxes}</div>${reset}</div>`);
+  }
+  wrap.innerHTML=rows.join('');
+}
+function saveWorkGoalSettings(showToast){
+  normalizeWorkGoalSettings();
+  const am=document.getElementById('wg-am-point'),pm=document.getElementById('wg-pm-point');
+  if(am)incSettings.workGoal.amPoint=+am.value||DEFAULT_WORK_GOAL.amPoint;
+  if(pm)incSettings.workGoal.pmPoint=+pm.value||DEFAULT_WORK_GOAL.pmPoint;
+  incSettings.workGoal.pmDays=[...document.querySelectorAll('#wg-pm-days input[type="checkbox"]:checked')].map(cb=>+cb.value);
+  settingsRef(currentUid).set({
+    workGoal:incSettings.workGoal,
+    vacations:incSettings.vacations||[],
+    holidayOverrides:incSettings.holidayOverrides||{added:{},removed:[]},
+    workdayOverrides:incSettings.workdayOverrides||{}
+  },{merge:true}).catch(function(){});
+  refreshIncentiveUI();
+  if(showToast!==false)toast('추천 목표 설정 저장 완료');
+}
+function savePmWeekOverride(weekNo){
+  normalizeWorkGoalSettings();
+  const checked=[...document.querySelectorAll(`#wg-pm-weekly input[data-week="${weekNo}"]:checked`)].map(cb=>+cb.value);
+  if(!incSettings.workGoal.pmWeekOverrides)incSettings.workGoal.pmWeekOverrides={};
+  if(!incSettings.workGoal.pmWeekOverrides[incViewMonth])incSettings.workGoal.pmWeekOverrides[incViewMonth]={};
+  incSettings.workGoal.pmWeekOverrides[incViewMonth][String(weekNo)]=checked;
+  saveWorkGoalSettings(false);
+  toast(`${weekNo}주차 오후근무 저장 완료`);
+}
+function clearPmWeekOverride(weekNo){
+  normalizeWorkGoalSettings();
+  const monthly=incSettings.workGoal.pmWeekOverrides&&incSettings.workGoal.pmWeekOverrides[incViewMonth];
+  if(monthly){
+    delete monthly[String(weekNo)];
+    if(!Object.keys(monthly).length)delete incSettings.workGoal.pmWeekOverrides[incViewMonth];
+  }
+  saveWorkGoalSettings(false);
+  toast(`${weekNo}주차 기본 요일 적용`);
+}
+function metricHtml(label,value,accent){return`<div class="goal-metric"><div class="goal-metric-label">${label}</div><div class="goal-metric-value${accent?' accent':''}">${value}</div></div>`;}
+function renderWorkGoalPlanner(){
+  if(!document.getElementById('wg-summary')||!incViewMonth)return;
+  normalizeWorkGoalSettings();syncWorkGoalInputs();
+  const goal=getWorkGoalSettings(),plan=calculateMonthPlan(incViewMonth);
+  const sum=document.getElementById('wg-summary');
+  sum.innerHTML=[
+    metricHtml('근무일',plan.workDays+'일'),
+    metricHtml('오전',plan.amSessions+'회'),
+    metricHtml('오후',plan.pmSessions+'회'),
+    metricHtml('공휴일',plan.holidayCount+'일'),
+    metricHtml('휴가',plan.vacationCount+'일'),
+    metricHtml('추천 목표',plan.recommendedTarget+'p',true)
+  ].join('');
+  const note=document.getElementById('wg-summary-note');
+  if(note)note.textContent=`${incViewMonth} 예상 ${plan.expected.toFixed(1)}p = 오전 ${plan.amSessions}회×${goal.amPoint}p + 오후 ${plan.pmSessions}회×${goal.pmPoint}p, ${goal.roundTo}p 단위 반올림`;
+  renderPmWeekPlanner();
+  renderGoalLists();
+}
+function renderGoalLists(){
+  const ym=incViewMonth,year=+ym.slice(0,4);
+  const vacEl=document.getElementById('wg-vacation-list');
+  if(vacEl){
+    const vac=(incSettings.vacations||[]).filter(d=>d.startsWith(ym));
+    vacEl.innerHTML=vac.length?vac.map(d=>`<span class="goal-chip">${d.slice(5)} 휴가 <button onclick="removeVacationDate('${d}')">×</button></span>`).join(''):'<span class="goal-sub">등록된 휴가 없음</span>';
+  }
+  const holEl=document.getElementById('wg-holiday-list');
+  if(holEl){
+    const entries=getHolidayEntries(year,true);
+    const items=Object.keys(entries).filter(d=>d.startsWith(ym)).sort().map(d=>{
+      const h=entries[d],btn=h.removed?`<button onclick="restoreHolidayOverride('${d}')">↺</button>`:`<button onclick="removeHolidayOverride('${d}')">×</button>`;
+      return`<span class="goal-chip${h.removed?' off':''}">${d.slice(5)} ${escH(h.name)}${h.removed?' 제외':''} ${btn}</span>`;
+    });
+    holEl.innerHTML=items.length?items.join(''):'<span class="goal-sub">해당 월 공휴일 없음</span>';
+  }
+  const overEl=document.getElementById('wg-override-list');
+  if(overEl){
+    const label={off:'휴무',am:'오전근무',full:'오전+오후'};
+    const items=Object.keys(incSettings.workdayOverrides||{}).filter(d=>d.startsWith(ym)).sort().map(d=>`<span class="goal-chip">${d.slice(5)} ${label[incSettings.workdayOverrides[d]]||'수정'} <button onclick="removeWorkdayOverride('${d}')">×</button></span>`);
+    overEl.innerHTML=items.length?items.join(''):'<span class="goal-sub">날짜별 수정 없음</span>';
+  }
+}
+function addVacationDate(){
+  const el=document.getElementById('wg-vacation-date'),date=el&&el.value;
+  if(!date){toast('휴가 날짜를 선택해주세요.');return;}
+  normalizeWorkGoalSettings();
+  incSettings.vacations=[...new Set([...(incSettings.vacations||[]),date])].sort();
+  if(el)el.value='';
+  saveWorkGoalSettings(false);toast('휴가 등록 완료');
+}
+function removeVacationDate(date){
+  incSettings.vacations=(incSettings.vacations||[]).filter(d=>d!==date);
+  saveWorkGoalSettings(false);toast('휴가 삭제 완료');
+}
+function addHolidayOverride(){
+  const de=document.getElementById('wg-holiday-date'),ne=document.getElementById('wg-holiday-name');
+  const date=de&&de.value,name=(ne&&ne.value.trim())||'사용자 공휴일';
+  if(!date){toast('공휴일 날짜를 선택해주세요.');return;}
+  normalizeWorkGoalSettings();
+  incSettings.holidayOverrides.added[date]=name;
+  incSettings.holidayOverrides.removed=incSettings.holidayOverrides.removed.filter(d=>d!==date);
+  if(de)de.value='';if(ne)ne.value='';
+  saveWorkGoalSettings(false);toast('공휴일 추가 완료');
+}
+function removeHolidayOverride(date){
+  normalizeWorkGoalSettings();
+  const y=+date.slice(0,4);
+  if(BUILT_IN_HOLIDAYS[y]&&BUILT_IN_HOLIDAYS[y][date]){
+    if(!incSettings.holidayOverrides.removed.includes(date))incSettings.holidayOverrides.removed.push(date);
+  }else{
+    delete incSettings.holidayOverrides.added[date];
+  }
+  saveWorkGoalSettings(false);toast('공휴일 제외 완료');
+}
+function restoreHolidayOverride(date){
+  normalizeWorkGoalSettings();
+  incSettings.holidayOverrides.removed=incSettings.holidayOverrides.removed.filter(d=>d!==date);
+  saveWorkGoalSettings(false);toast('공휴일 복원 완료');
+}
+function addWorkdayOverride(){
+  const de=document.getElementById('wg-override-date'),te=document.getElementById('wg-override-type');
+  const date=de&&de.value,type=te&&te.value;
+  if(!date){toast('수정할 날짜를 선택해주세요.');return;}
+  normalizeWorkGoalSettings();
+  incSettings.workdayOverrides[date]=type||'off';
+  if(de)de.value='';
+  saveWorkGoalSettings(false);toast('날짜별 근무 수정 완료');
+}
+function removeWorkdayOverride(date){
+  if(incSettings.workdayOverrides)delete incSettings.workdayOverrides[date];
+  saveWorkGoalSettings(false);toast('날짜별 수정 삭제 완료');
+}
+function applySuggestedTarget(ym){
+  ym=ym||incViewMonth;
+  const m=+ym.slice(5,7),plan=calculateMonthPlan(ym);
+  const el=document.getElementById('target-m'+m);
+  if(el)el.value=plan.recommendedTarget;
+  saveTargets();
+  toast(`${m}월 추천 목표 ${plan.recommendedTarget}p 적용 완료`);
+}
+function applyYearSuggestedTargets(){
+  const year=+incViewMonth.slice(0,4);
+  for(let m=1;m<=12;m++){
+    const ym=year+'-'+String(m).padStart(2,'0');
+    const el=document.getElementById('target-m'+m);
+    if(el)el.value=calculateMonthPlan(ym).recommendedTarget;
+  }
+  saveTargets();
+  toast(`${year}년 추천 목표 적용 완료`);
+}
 async function loadIncentiveSettings() {
   try {
     const doc=await settingsRef(currentUid).get();
     if(doc.exists) incSettings={...incSettings,...doc.data()};
   } catch(e){}
   if(!incSettings.monthly)incSettings.monthly=[0,1000,1000,1000,1000,1000,1000,1300,1300,1300,1300,1300,1300];
+  normalizeWorkGoalSettings();
   for(var mi=1;mi<=12;mi++){var mel=document.getElementById('target-m'+mi);if(mel)mel.value=incSettings.monthly[mi]||(mi>=7?1300:1000);}
   const h1=document.getElementById('target-h1'); if(h1) h1.value=incSettings.h1;
   const h2=document.getElementById('target-h2'); if(h2) h2.value=incSettings.h2;
+  syncWorkGoalInputs();renderWorkGoalPlanner();
 }
 function setAllTargets(v){for(var i=1;i<=12;i++){var e=document.getElementById('target-m'+i);if(e)e.value=v;}saveTargets();}
 function setHalfTargets(){for(var i=1;i<=12;i++){var e=document.getElementById('target-m'+i);if(e)e.value=i>=7?1300:1000;}saveTargets();}
 
 function saveTargets() {
+  normalizeWorkGoalSettings();
   if(!incSettings.monthly) incSettings.monthly=[0,1000,1000,1000,1000,1000,1000,1300,1300,1300,1300,1300,1300];
   for(var mi=1;mi<=12;mi++){var mel=document.getElementById('target-m'+mi);if(mel)incSettings.monthly[mi]=+mel.value||(mi>=7?1300:1000);}
   // 호환성 위해 h1/h2도 유지
@@ -2592,7 +3111,7 @@ function saveTargets() {
   // 옛 단순 입력란도 지원
   var h1el=document.getElementById('target-h1');if(h1el&&!document.getElementById('target-m1'))incSettings.h1=+h1el.value||1000;
   var h2el=document.getElementById('target-h2');if(h2el&&!document.getElementById('target-m7'))incSettings.h2=+h2el.value||1300;
-  settingsRef(currentUid).set(incSettings).catch(function(){});
+  settingsRef(currentUid).set(incSettings,{merge:true}).catch(function(){});
   refreshIncentiveUI(); if(typeof refreshAdrUI==='function')refreshAdrUI(); toast('목표 저장 완료');
 }
 function toggleTargetEdit(){const el=document.getElementById('target-card');el.style.display=el.style.display==='none'?'':'none';}
@@ -2620,11 +3139,12 @@ function refreshIncentiveUI() {
   if(gb){gb.textContent=grade.g+' 등급';gb.className='grade-badge grade-'+grade.g;}
   if(el('inc-incentive-amt')) el('inc-incentive-amt').textContent='예상 PTS '+grade.amt+'원';
   const now=new Date(); const isCurrentMonth=ym===TODAY.slice(0,7);
-  const daysInMonth=new Date(now.getFullYear(),monthNum,0).getDate();
-  let workDaysLeft=0;
-  if(isCurrentMonth){for(let d=now.getDate()+1;d<=daysInMonth;d++){const dow=new Date(now.getFullYear(),monthNum-1,d).getDay();if(dow!==0&&dow!==6)workDaysLeft++;}}
+  const [viewYear,viewMonth]=ym.split('-').map(Number);
+  const daysInMonth=new Date(viewYear,viewMonth,0).getDate();
+  const remainingPlan=getRemainingWorkPlan(ym);
+  const workDaysLeft=remainingPlan.workDays;
   const daysLeftEl=el('inc-days-left');
-  if(daysLeftEl) daysLeftEl.textContent=isCurrentMonth?`${daysInMonth-now.getDate()}일 남음 (평일 ${workDaysLeft}일)`:'';
+  if(daysLeftEl) daysLeftEl.textContent=isCurrentMonth?`${daysInMonth-now.getDate()}일 남음 (실근무 ${workDaysLeft}일)`:ym>TODAY.slice(0,7)?`예정 실근무 ${workDaysLeft}일`:'';
   const recDays=incDays.filter(d=>d.pts>0).length;
   const avg=recDays?(totalPts/recDays):0;
   const needed=Math.max(0,target-totalPts);
@@ -2638,6 +3158,7 @@ function refreshIncentiveUI() {
   if(el('is-week')) el('is-week').textContent=weekPts.toFixed(1);
   const sb=el('sb-incentive'); if(sb) sb.textContent=totalPts.toFixed(0)+'p';
   renderIncChart();
+  renderWorkGoalPlanner();
 }
 function changeIncMonth(dir){
   const [y,m]=incViewMonth.split('-').map(Number);
@@ -2676,33 +3197,32 @@ function renderIncChart(){
   const total=dailyArr.reduce((s,d)=>s+d.pts,0);
   const sub=document.getElementById('inc-chart-sub');if(sub)sub.textContent=`누적 ${total.toFixed(1)}p / 목표 ${target}p (${Math.round(total/target*100)}%)`;
 }
+function buildLocalAIAnalysis(ym,target,totalPts,recDays,avg,workDaysLeft,dailyGoal,grade){
+  const plan=calculateMonthPlan(ym),remaining=getRemainingWorkPlan(ym),goal=getWorkGoalSettings();
+  const pct=target>0?Math.round(totalPts/target*100):0;
+  const pace=avg>0?`기록된 날 기준 평균은 ${avg.toFixed(1)}p입니다.`:'아직 기록된 근무 점수가 없습니다.';
+  const targetNote=target===plan.recommendedTarget?`현재 목표는 추천 목표와 같습니다.`:`현재 수동 목표 ${target}p와 근무 캘린더 추천 목표 ${plan.recommendedTarget}p 사이에 ${Math.abs(target-plan.recommendedTarget)}p 차이가 있습니다.`;
+  const dailyNote=workDaysLeft>0?`남은 실제 근무일 ${workDaysLeft}일(오전 ${remaining.amSessions}회, 오후 ${remaining.pmSessions}회) 기준으로 하루 평균 ${dailyGoal.toFixed(1)}p가 필요합니다.`:'이 달의 남은 실제 근무일이 없습니다.';
+  return `현재 ${ym} 누적은 ${totalPts.toFixed(1)}p / 목표 ${target}p (${pct}%)이고, 등급은 ${grade.g}입니다. ${pace}
+
+추천 목표 산식은 오전 ${plan.amSessions}회×${goal.amPoint}p + 오후 ${plan.pmSessions}회×${goal.pmPoint}p = ${plan.expected.toFixed(1)}p이며, 10p 단위 반올림으로 ${plan.recommendedTarget}p입니다. ${targetNote}
+
+${dailyNote} 휴가 ${plan.vacationCount}일, 공휴일 ${plan.holidayCount}일, 상반기 1·3주 토요휴무와 하반기 토요근무 규칙을 반영했습니다.
+
+전략은 단순합니다. 오전근무일에는 40p 근처를 안정적으로 확보하고, 화·목 오후근무는 13p 안팎을 보태는 기준으로 보면 됩니다. 목표가 빡빡해지는 달에는 날짜별 근무 수정이나 휴가 등록을 먼저 맞춘 뒤 추천 목표를 다시 적용하세요.`;
+}
 async function runAIAnalysis(){
   const ym=incViewMonth,target=getMonthTarget(ym);
   const totalPts=incDays.reduce((s,d)=>s+(d.pts||0),0);
   const recDays=incDays.filter(d=>d.pts>0).length;
   const avg=recDays?(totalPts/recDays):0;
-  const monthNum=parseInt(ym.slice(5,7));
-  const daysInMonth=new Date(new Date().getFullYear(),monthNum,0).getDate();
-  const now=new Date();let workDaysLeft=0;
-  if(ym===TODAY.slice(0,7)){for(let d=now.getDate()+1;d<=daysInMonth;d++){const dow=new Date(now.getFullYear(),monthNum-1,d).getDay();if(dow!==0&&dow!==6)workDaysLeft++;}}
+  const workDaysLeft=getRemainingWorkPlan(ym).workDays;
   const needed=Math.max(0,target-totalPts);
   const dailyGoal=workDaysLeft>0?(needed/workDaysLeft):0;
   const grade=getGrade(totalPts,ym);
   const card=document.getElementById('ai-analysis-card'),textEl=document.getElementById('ai-text');
   if(!card)return;card.style.display='';
-  textEl.innerHTML='<div style="color:var(--text3);font-size:12px;display:flex;align-items:center;gap:8px;"><span class="spin"></span>분석 중...</div>';
-  const prompt=`당신은 내시경 의사의 성과 관리 코치입니다. 다음 데이터를 분석해서 한국어로 친절하고 구체적인 조언을 해주세요.
-
-현재 월: ${ym} / 목표: ${target}p / 누적: ${totalPts.toFixed(1)}p (${Math.round(totalPts/target*100)}%) / 등급: ${grade.g} / 기록 일수: ${recDays}일 / 일 평균: ${avg.toFixed(1)}p / 남은 평일: ${workDaysLeft}일 / 일일 필요: ${dailyGoal.toFixed(1)}p
-
-포인트 체계: EGD 1p, CFS 2p, 조직검사 0.5p, CPP 1p, CLO 0.5p
-
-분석 내용: 1)현재 페이스 평가 2)다음 등급 달성 전략 3)구체적 일일 목표 4)응원 메시지 (간결하게 3-4문단)`;
-  try{
-    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:prompt}]})});
-    const data=await res.json();
-    textEl.textContent=data.content?.[0]?.text||'분석 결과를 가져오지 못했습니다.';
-  }catch(e){textEl.textContent='⚠️ AI 분석 오류: '+e.message;}
+  textEl.textContent=buildLocalAIAnalysis(ym,target,totalPts,recDays,avg,workDaysLeft,dailyGoal,grade);
 }
 
 // ══ 질환노트, 저널, 법적분쟁 stub ══
@@ -2911,30 +3431,4 @@ function selectDiag(name){const inp=document.getElementById('f-name');if(inp)inp
 let noteTagFilter_='';function buildNoteTagFilters_(){buildNoteTagFilters();}
 </script>
 </body>
-</html>async function loadDayData(date) {
-  document.getElementById('inp-date').value = date;
-  const rec = allDays.find(d => d.key === date);
-  const note = document.getElementById('snote');
-  let egd=0,cfs=0,bxe=0,bxc=0,cpp=0,clo=0;
-  if (rec) {
-    egd=rec.egd||0; cfs=rec.cfs||0; bxe=rec.bxe||0;
-    bxc=rec.bxc||0; cpp=rec.cpp||0; clo=rec.clo||0;
-    document.getElementById('ve').value  = egd;
-    document.getElementById('vbe').value = bxe;
-    document.getElementById('vc').value  = cfs;
-    document.getElementById('vbc').value = bxc;
-    const vcpp=document.getElementById('vcpp'); if(vcpp) vcpp.value=cpp;
-    const vclo=document.getElementById('vclo'); if(vclo) vclo.value=clo;
-    const savedPts=Math.round((egd*1+cfs*2+bxe*0.5+bxc*0.5+cpp*1+clo*0.5)*10)/10;
-    note.style.display='block';
-    note.innerHTML=`저장된 기록 — EGD <strong>${egd}</strong> · CFS <strong>${cfs}</strong> · Bx-E ${bxe} · Bx-C ${bxc} · CPP ${cpp} · CLO ${clo} &nbsp;|&nbsp; <strong>${savedPts}p</strong>`;
-  } else {
-    ['ve','vbe','vc','vbc'].forEach(id=>document.getElementById(id).value=0);
-    const vcpp=document.getElementById('vcpp'); if(vcpp) vcpp.value=0;
-    const vclo=document.getElementById('vclo'); if(vclo) vclo.value=0;
-    note.style.display='none';
-  }
-  const pts=Math.round((egd*1+cfs*2+bxe*0.5+bxc*0.5+cpp*1+clo*0.5)*10)/10;
-  const ptsEl=document.getElementById('cnt-calc-pts'); if(ptsEl) ptsEl.textContent=pts.toFixed(1)+'p';
-  const bdEl=document.getElementById('cnt-pts-breakdown'); if(bdEl) bdEl.textContent=`EGD ${egd} + CFS ${cfs*2} + Bx ${(bxe+bxc)*0.5} + CPP ${cpp} + CLO ${clo*0.5}`;
-}
+</html>
