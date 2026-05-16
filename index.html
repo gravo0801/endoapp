@@ -1977,15 +1977,33 @@ function showApp(user) {
   if(av)av.textContent=(label||'E').slice(0,1).toUpperCase();
 }
 async function signInWithGoogle() {
-  setLoginMessage('Google 로그인 중...');
+  setLoginMessage('Google 로그인 페이지로 이동합니다...');
   try {
     const provider=new firebase.auth.GoogleAuthProvider();
     provider.setCustomParameters({prompt:'select_account'});
-    await auth.signInWithPopup(provider);
+    sessionStorage.setItem('endo-google-redirect-pending','1');
+    await auth.signInWithRedirect(provider);
   } catch(e) {
-    setLoginMessage('로그인 오류: '+e.message);
+    sessionStorage.removeItem('endo-google-redirect-pending');
+    const friendly=e.code==='auth/operation-not-allowed'
+      ? 'Firebase Console에서 Google 로그인 provider를 사용 설정해주세요.'
+      : e.code==='auth/unauthorized-domain'
+      ? 'Firebase Authentication Authorized domains에 gravo0801.github.io를 추가해주세요.'
+      : '로그인 오류: '+e.message;
+    setLoginMessage(friendly);
   }
 }
+auth.getRedirectResult().then(function(result){
+  sessionStorage.removeItem('endo-google-redirect-pending');
+}).catch(function(e){
+  sessionStorage.removeItem('endo-google-redirect-pending');
+  const friendly=e.code==='auth/operation-not-allowed'
+    ? 'Firebase Console에서 Google 로그인 provider를 사용 설정해주세요.'
+    : e.code==='auth/unauthorized-domain'
+    ? 'Firebase Authentication Authorized domains에 gravo0801.github.io를 추가해주세요.'
+    : '로그인 오류: '+e.message;
+  setLoginMessage(friendly);
+});
 async function isAllowedUser(uid) {
   const snap=await allowedUserRef(uid).get();
   return snap.exists;
@@ -2019,7 +2037,12 @@ async function migrateLegacyDataIfNeeded(uid) {
 }
 
 auth.onAuthStateChanged(async function(user){
-  if(!user){currentUid=null;showLogin();setLoginMessage('');return;}
+  if(!user){
+    currentUid=null;showLogin();
+    if(sessionStorage.getItem('endo-google-redirect-pending')==='1')setLoginMessage('Google 로그인 확인 중...');
+    else setLoginMessage('');
+    return;
+  }
   setLoginMessage('접근 권한 확인 중...',user.uid);
   try{
     const allowed=await isAllowedUser(user.uid);
