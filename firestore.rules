@@ -1,0 +1,38 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isAllowed() {
+      return signedIn()
+        && exists(/databases/$(database)/documents/allowedUsers/$(request.auth.uid));
+    }
+
+    function ownsUserPath(userId) {
+      return isAllowed() && request.auth.uid == userId;
+    }
+
+    match /allowedUsers/{uid} {
+      allow read: if signedIn() && request.auth.uid == uid;
+      allow write: if false;
+    }
+
+    match /users/{userId}/{document=**} {
+      allow read, write: if userId != 'endoapp-user-01' && ownsUserPath(userId);
+    }
+
+    // Temporary legacy read access for the one-time in-app migration.
+    // Remove this after users/endoapp-user-01 has been copied into the Firebase Auth UID path.
+    match /users/endoapp-user-01/{document=**} {
+      allow read: if isAllowed();
+      allow write: if false;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

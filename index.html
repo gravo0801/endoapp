@@ -317,7 +317,9 @@ function refreshAdrTrend() {
 
 <!-- Firebase SDKs -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-check-compat.js"></script>
 
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
@@ -347,6 +349,7 @@ html,body{height:100%;font-family:'Noto Sans KR',sans-serif;background:var(--sb)
 .btn-google:hover{opacity:0.88;}
 .btn-google svg{width:18px;height:18px;flex-shrink:0;}
 .login-note{font-size:11px;color:rgba(255,255,255,0.25);margin-top:14px;line-height:1.7;}
+.login-uid{font-family:'DM Mono',monospace;font-size:10px;color:rgba(255,255,255,0.38);word-break:break-all;margin-top:8px;line-height:1.5;}
 
 /* ── APP SHELL ── */
 .shell{display:flex;height:100vh;overflow:hidden;}
@@ -1007,10 +1010,13 @@ html,body{height:100%;font-family:'Noto Sans KR',sans-serif;background:var(--sb)
     </div>
     <div class="login-title">EndoApp</div>
     <div class="login-sub">내시경 시술 기록 · 케이스 스터디<br>통합 관리 앱</div>
-    <input class="pw-input" id="pw-inp" type="password" placeholder="비밀번호 입력" onkeydown="if(event.key==='Enter')checkPw()"/>
-    <button class="btn-enter" onclick="checkPw()">입장</button>
+    <button class="btn-google" onclick="signInWithGoogle()">
+      <svg viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84c-.21 1.12-.84 2.07-1.8 2.71v2.25h2.91c1.7-1.57 2.69-3.88 2.69-6.6z"/><path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.19l-2.91-2.25c-.81.54-1.84.86-3.05.86-2.35 0-4.34-1.58-5.05-3.71H.94v2.33C2.42 15.98 5.46 18 9 18z"/><path fill="#FBBC05" d="M3.95 10.71A5.41 5.41 0 0 1 3.67 9c0-.59.1-1.16.28-1.71V4.96H.94A8.98 8.98 0 0 0 0 9c0 1.45.34 2.82.94 4.04l3.01-2.33z"/><path fill="#EA4335" d="M9 3.58c1.32 0 2.51.45 3.44 1.35l2.58-2.58C13.46.9 11.43 0 9 0 5.46 0 2.42 2.02.94 4.96l3.01 2.33C4.66 5.16 6.65 3.58 9 3.58z"/></svg>
+      Google로 로그인
+    </button>
     <div class="login-err" id="pw-err"></div>
-    <div class="login-note">PC·모바일 동일 비밀번호로 실시간 동기화됩니다.</div>
+    <div class="login-note">허용된 Google 계정만 데이터를 읽고 저장할 수 있습니다.</div>
+    <div class="login-uid" id="auth-uid-hint"></div>
   </div>
 </div>
 
@@ -1081,6 +1087,9 @@ html,body{height:100%;font-family:'Noto Sans KR',sans-serif;background:var(--sb)
           <button class="chip" onclick="toggleTargetEdit()">⚙ 목표</button>
           <button class="chip" onclick="runAIAnalysis()">📌 목표 분석</button>
           <button class="chip" onclick="exportCSV()">CSV</button>
+          <button class="chip" onclick="exportFullBackup()">JSON 백업</button>
+          <button class="chip" onclick="document.getElementById('json-restore-file').click()">JSON 복원</button>
+          <input id="json-restore-file" type="file" accept="application/json,.json" style="display:none" onchange="importFullBackup(event)"/>
         </div>
       </div>
       <div class="inc-scroll">
@@ -1925,6 +1934,11 @@ html,body{height:100%;font-family:'Noto Sans KR',sans-serif;background:var(--sb)
 //  FIREBASE INIT
 // ══════════════════════════════════
 firebase.initializeApp(firebaseConfig);
+const APP_CHECK_SITE_KEY = '';
+if (APP_CHECK_SITE_KEY && firebase.appCheck) {
+  firebase.appCheck().activate(APP_CHECK_SITE_KEY, true);
+}
+const auth = firebase.auth();
 const db   = firebase.firestore();
 
 const daysCol     = uid => db.collection('users').doc(uid).collection('days');
@@ -1933,51 +1947,102 @@ const notesCol    = uid => db.collection('users').doc(uid).collection('notes');
 const journalCol  = uid => db.collection('users').doc(uid).collection('journal');
 const legalCol    = uid => db.collection('users').doc(uid).collection('legal');
 const settingsRef = uid => db.collection('users').doc(uid).collection('settings').doc('incentive');
+const securityRef = uid => db.collection('users').doc(uid).collection('settings').doc('security');
+const userRootRef = uid => db.collection('users').doc(uid);
+const allowedUserRef = uid => db.collection('allowedUsers').doc(uid);
 
 // ══════════════════════════════════
 //  AUTH
 // ══════════════════════════════════
 let currentUid = null;
-
-const APP_PASSWORD = 'endo1234';
 const FIXED_UID = 'endoapp-user-01';
+const MIGRATION_COLLECTIONS = ['days','notes','journal','legal','settings'];
 
-function checkPw() {
-  const val = document.getElementById('pw-inp').value;
-  const errEl = document.getElementById('pw-err');
-  if (val === APP_PASSWORD) {
-    currentUid = FIXED_UID;
-    document.getElementById('login-screen').classList.add('hide');
-    document.getElementById('app-shell').classList.remove('hide');
-    document.getElementById('sb-uname').textContent = '내 계정';
-    sessionStorage.setItem('endo-auth', '1');
-    init();
-  } else {
-    if(errEl) errEl.textContent = '비밀번호가 틀렸습니다.';
-    document.getElementById('pw-inp').value = '';
+function setLoginMessage(msg, uid) {
+  const errEl=document.getElementById('pw-err');
+  const uidEl=document.getElementById('auth-uid-hint');
+  if(errEl)errEl.textContent=msg||'';
+  if(uidEl)uidEl.textContent=uid?('UID: '+uid):'';
+}
+function showLogin() {
+  document.getElementById('login-screen').classList.remove('hide');
+  document.getElementById('app-shell').classList.add('hide');
+}
+function showApp(user) {
+  document.getElementById('login-screen').classList.add('hide');
+  document.getElementById('app-shell').classList.remove('hide');
+  const label=user.displayName||user.email||'내 계정';
+  document.getElementById('sb-uname').textContent=label;
+  const av=document.getElementById('sb-avatar');
+  if(av)av.textContent=(label||'E').slice(0,1).toUpperCase();
+}
+async function signInWithGoogle() {
+  setLoginMessage('Google 로그인 중...');
+  try {
+    const provider=new firebase.auth.GoogleAuthProvider();
+    provider.setCustomParameters({prompt:'select_account'});
+    await auth.signInWithPopup(provider);
+  } catch(e) {
+    setLoginMessage('로그인 오류: '+e.message);
   }
 }
-
-if (sessionStorage.getItem('endo-auth') === '1') {
-  currentUid = FIXED_UID;
-  var _doAutoLogin = function() {
-    document.getElementById('login-screen').classList.add('hide');
-    document.getElementById('app-shell').classList.remove('hide');
-    document.getElementById('sb-uname').textContent = '내 계정';
-    init();
-  };
-  // 스크립트가 </body> 직전 → DOM 이미 준비됨 → 바로 실행
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', _doAutoLogin);
-  } else {
-    _doAutoLogin();
+async function isAllowedUser(uid) {
+  const snap=await allowedUserRef(uid).get();
+  return snap.exists;
+}
+async function migrateLegacyDataIfNeeded(uid) {
+  if(uid===FIXED_UID)return;
+  const sec=await securityRef(uid).get();
+  if(sec.exists&&sec.data().legacyMigratedAt)return;
+  const legacyRoot=userRootRef(FIXED_UID);
+  const targetRoot=userRootRef(uid);
+  let copied=0;
+  for(const colName of MIGRATION_COLLECTIONS){
+    const snap=await legacyRoot.collection(colName).get();
+    for(const doc of snap.docs){
+      await targetRoot.collection(colName).doc(doc.id).set(doc.data(),{merge:true});
+      copied++;
+    }
   }
+  const caseSnap=await legacyRoot.collection('cases').get();
+  for(const doc of caseSnap.docs){
+    await targetRoot.collection('cases').doc(doc.id).set(doc.data(),{merge:true});
+    copied++;
+    const photoSnap=await legacyRoot.collection('cases').doc(doc.id).collection('photos').get();
+    for(const p of photoSnap.docs){
+      await targetRoot.collection('cases').doc(doc.id).collection('photos').doc(p.id).set(p.data(),{merge:true});
+      copied++;
+    }
+  }
+  await securityRef(uid).set({legacyMigratedAt:firebase.firestore.FieldValue.serverTimestamp(),legacySource:FIXED_UID,copiedDocs:copied},{merge:true});
+  if(copied>0)toast('기존 데이터 이전 완료: '+copied+'개 문서');
 }
 
-function signOut() {
+auth.onAuthStateChanged(async function(user){
+  if(!user){currentUid=null;showLogin();setLoginMessage('');return;}
+  setLoginMessage('접근 권한 확인 중...',user.uid);
+  try{
+    const allowed=await isAllowedUser(user.uid);
+    if(!allowed){
+      showLogin();
+      setLoginMessage('허용되지 않은 계정입니다. Firebase allowedUsers에 이 UID를 등록해주세요.',user.uid);
+      return;
+    }
+    currentUid=user.uid;
+    showApp(user);
+    setLoginMessage('',user.uid);
+    try{await migrateLegacyDataIfNeeded(user.uid);}
+    catch(migErr){console.error('migration error:',migErr);toast('기존 데이터 이전 확인 필요: '+migErr.message);}
+    init();
+  }catch(e){
+    showLogin();
+    setLoginMessage('권한 확인 오류: '+e.message,user.uid);
+  }
+});
+
+async function signOut() {
   if (confirm('로그아웃하시겠습니까?')) {
-    sessionStorage.removeItem('endo-auth');
-    location.reload();
+    await auth.signOut();
   }
 }
 
@@ -2695,6 +2760,117 @@ function exportCSV() {
   const csv='\uFEFF'+rows.map(r=>r.join(',')).join('\n');
   const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8;'}));a.download=`EndoCount_${TODAY}.csv`;a.click();
   toast('CSV 다운로드 완료');
+}
+function downloadBlob(name,content,type){
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([content],{type}));
+  a.download=name;
+  a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+}
+function encodeBackupValue(v){
+  if(v&&typeof v.toDate==='function'&&typeof v.seconds==='number')return{__type:'timestamp',seconds:v.seconds,nanoseconds:v.nanoseconds||0};
+  if(Array.isArray(v))return v.map(encodeBackupValue);
+  if(v&&typeof v==='object'){
+    const out={};
+    Object.keys(v).forEach(k=>out[k]=encodeBackupValue(v[k]));
+    return out;
+  }
+  return v;
+}
+function decodeBackupValue(v){
+  if(v&&v.__type==='timestamp'&&typeof v.seconds==='number')return new firebase.firestore.Timestamp(v.seconds,v.nanoseconds||0);
+  if(Array.isArray(v))return v.map(decodeBackupValue);
+  if(v&&typeof v==='object'){
+    const out={};
+    Object.keys(v).forEach(k=>out[k]=decodeBackupValue(v[k]));
+    return out;
+  }
+  return v;
+}
+async function readBackupCollection(uid,name){
+  const snap=await userRootRef(uid).collection(name).get();
+  return snap.docs.map(d=>({id:d.id,data:encodeBackupValue(d.data())}));
+}
+async function readBackupCases(uid){
+  const snap=await casesCol(uid).get();
+  const cases=[];
+  for(const d of snap.docs){
+    const photos=await casesCol(uid).doc(d.id).collection('photos').get();
+    cases.push({id:d.id,data:encodeBackupValue(d.data()),photos:photos.docs.map(p=>({id:p.id,data:encodeBackupValue(p.data())}))});
+  }
+  return cases;
+}
+async function exportFullBackup(){
+  if(!currentUid){toast('로그인 후 백업할 수 있습니다.');return;}
+  try{
+    toast('전체 JSON 백업 생성 중...');
+    const backup={
+      meta:{app:'EndoApp',version:'security-backup-v1',exportedAt:new Date().toISOString(),uid:currentUid},
+      days:await readBackupCollection(currentUid,'days'),
+      cases:await readBackupCases(currentUid),
+      notes:await readBackupCollection(currentUid,'notes'),
+      journal:await readBackupCollection(currentUid,'journal'),
+      legal:await readBackupCollection(currentUid,'legal'),
+      settings:await readBackupCollection(currentUid,'settings')
+    };
+    downloadBlob(`EndoApp_Backup_${TODAY}.json`,JSON.stringify(backup,null,2),'application/json;charset=utf-8;');
+    toast('전체 JSON 백업 완료');
+  }catch(e){toast('백업 오류: '+e.message);}
+}
+async function restoreBackupCollection(uid,name,items){
+  let count=0;
+  for(const item of (items||[])){
+    if(!item.id||!item.data)continue;
+    await userRootRef(uid).collection(name).doc(item.id).set(decodeBackupValue(item.data),{merge:true});
+    count++;
+  }
+  return count;
+}
+async function restoreBackupCases(uid,cases){
+  let count=0;
+  for(const item of (cases||[])){
+    if(!item.id||!item.data)continue;
+    const ref=casesCol(uid).doc(item.id);
+    await ref.set(decodeBackupValue(item.data),{merge:true});
+    count++;
+    for(const p of (item.photos||[])){
+      if(!p.id||!p.data)continue;
+      await ref.collection('photos').doc(p.id).set(decodeBackupValue(p.data),{merge:true});
+      count++;
+    }
+  }
+  return count;
+}
+async function importFullBackup(ev){
+  const file=ev.target.files&&ev.target.files[0];
+  ev.target.value='';
+  if(!file)return;
+  if(!currentUid){toast('로그인 후 복원할 수 있습니다.');return;}
+  try{
+    const backup=JSON.parse(await file.text());
+    if(!backup.meta||backup.meta.app!=='EndoApp'){toast('EndoApp 백업 파일이 아닙니다.');return;}
+    const counts={
+      days:(backup.days||[]).length,
+      cases:(backup.cases||[]).length,
+      notes:(backup.notes||[]).length,
+      journal:(backup.journal||[]).length,
+      legal:(backup.legal||[]).length,
+      settings:(backup.settings||[]).length
+    };
+    const msg=`JSON 백업을 현재 계정에 병합 복원할까요?\n\n기록 ${counts.days}일 / 케이스 ${counts.cases}건 / 노트 ${counts.notes}건 / 저널 ${counts.journal}건 / 법적분쟁 ${counts.legal}건 / 설정 ${counts.settings}개\n\n기존 데이터는 삭제하지 않습니다.`;
+    if(!confirm(msg))return;
+    toast('JSON 복원 중...');
+    let restored=0;
+    restored+=await restoreBackupCollection(currentUid,'days',backup.days);
+    restored+=await restoreBackupCases(currentUid,backup.cases);
+    restored+=await restoreBackupCollection(currentUid,'notes',backup.notes);
+    restored+=await restoreBackupCollection(currentUid,'journal',backup.journal);
+    restored+=await restoreBackupCollection(currentUid,'legal',backup.legal);
+    restored+=await restoreBackupCollection(currentUid,'settings',backup.settings);
+    await loadAllDays();await loadAllCases();await loadAllNotes();await loadAllJournal();await loadAllLegal();await loadIncentiveSettings();
+    toast('JSON 복원 완료: '+restored+'개 문서');
+  }catch(e){toast('복원 오류: '+e.message);}
 }
 
 // ══ PTS functions ══
