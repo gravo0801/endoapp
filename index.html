@@ -762,6 +762,12 @@ html,body{height:100%;font-family:'Noto Sans KR',sans-serif;background:var(--sb)
 .goal-select{padding:6px 8px;border:1px solid var(--border);border-radius:var(--rsm);background:var(--surface);font-size:12px;color:var(--text);outline:none;}
 .goal-check{display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--text2);white-space:nowrap;}
 .goal-check input{accent-color:var(--egd-dark);}
+.goal-week-table{display:grid;gap:6px;}
+.goal-week-row{display:grid;grid-template-columns:88px 1fr auto;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--rsm);padding:7px 8px;}
+.goal-week-label{font-size:11px;font-weight:600;color:var(--text);}
+.goal-week-days{display:flex;gap:8px;flex-wrap:wrap;}
+.goal-week-reset{font-size:10px;border:1px solid var(--border);border-radius:999px;background:var(--surface2);color:var(--text3);padding:4px 8px;cursor:pointer;white-space:nowrap;}
+.goal-week-reset:hover{color:var(--text);border-color:var(--border2);}
 .goal-summary{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;margin-bottom:10px;}
 .goal-metric{background:var(--surface2);border:1px solid var(--border);border-radius:var(--rsm);padding:9px 8px;}
 .goal-metric-label{font-size:10px;color:var(--text3);margin-bottom:4px;}
@@ -1073,7 +1079,7 @@ html,body{height:100%;font-family:'Noto Sans KR',sans-serif;background:var(--sb)
         </div>
         <div style="margin-left:auto;display:flex;gap:7px;flex-wrap:wrap;">
           <button class="chip" onclick="toggleTargetEdit()">⚙ 목표</button>
-          <button class="chip" onclick="runAIAnalysis()">🤖 AI 분석</button>
+          <button class="chip" onclick="runAIAnalysis()">📌 목표 분석</button>
           <button class="chip" onclick="exportCSV()">CSV</button>
         </div>
       </div>
@@ -1103,7 +1109,7 @@ html,body{height:100%;font-family:'Noto Sans KR',sans-serif;background:var(--sb)
           <div class="goal-planner">
             <div class="goal-head">
               <div>
-                <div class="goal-title">AI 추천 목표 계산</div>
+                <div class="goal-title">추천 목표 계산</div>
                 <div class="goal-sub">공휴일, 토요일 규칙, 휴가, 오전/오후 세션 기준으로 현재 선택 월의 목표를 계산합니다.</div>
               </div>
               <div class="goal-inline">
@@ -1120,13 +1126,19 @@ html,body{height:100%;font-family:'Noto Sans KR',sans-serif;background:var(--sb)
                 </div>
               </div>
               <div class="goal-box">
-                <div class="goal-box-title">오후근무 요일</div>
+                <div class="goal-box-title">기본 오후근무 요일</div>
                 <div class="goal-inline" id="wg-pm-days">
                   <label class="goal-check"><input type="checkbox" value="1" onchange="saveWorkGoalSettings()"/>월</label>
                   <label class="goal-check"><input type="checkbox" value="2" onchange="saveWorkGoalSettings()" checked/>화</label>
                   <label class="goal-check"><input type="checkbox" value="4" onchange="saveWorkGoalSettings()" checked/>목</label>
                   <label class="goal-check"><input type="checkbox" value="5" onchange="saveWorkGoalSettings()"/>금</label>
                 </div>
+                <div class="goal-sub" style="margin-top:6px;">주차별 설정이 없는 주에만 적용됩니다.</div>
+              </div>
+              <div class="goal-box" style="grid-column:1 / -1;">
+                <div class="goal-box-title">이번 달 주차별 오후근무</div>
+                <div class="goal-sub" style="margin-bottom:8px;">매주 오후근무 요일이 다르면 여기서 주차별로 체크하세요. 수요일·토요일은 오전근무 기준으로 둡니다.</div>
+                <div class="goal-week-table" id="wg-pm-weekly"></div>
               </div>
               <div class="goal-box">
                 <div class="goal-box-title">휴가 등록</div>
@@ -1334,7 +1346,7 @@ html,body{height:100%;font-family:'Noto Sans KR',sans-serif;background:var(--sb)
           </div>
           <div class="chart-wrap"><div class="chart-grid" id="chartGrid"></div><div class="chart-bars" id="miniChart"></div></div>
         </div>
-        <!-- AI 분석 -->
+        <!-- 목표 분석 -->
 
         <!-- ADR/PDR 통계 -->
         <div class="adr-section" style="margin-top:16px;">
@@ -1433,7 +1445,7 @@ html,body{height:100%;font-family:'Noto Sans KR',sans-serif;background:var(--sb)
         </div>
 
         <div class="ai-card" id="ai-analysis-card" style="display:none;margin-top:16px;">
-          <div class="ai-card-title"><svg width="14" height="14" viewBox="0 0 14 14"><circle cx="7" cy="7" r="6" fill="var(--bxc-dark)" opacity="0.2"/><path d="M7 4v3.5l2 1.5" stroke="var(--bxc-dark)" stroke-width="1.3" stroke-linecap="round"/></svg> AI 분석</div>
+          <div class="ai-card-title"><svg width="14" height="14" viewBox="0 0 14 14"><circle cx="7" cy="7" r="6" fill="var(--bxc-dark)" opacity="0.2"/><path d="M7 4v3.5l2 1.5" stroke="var(--bxc-dark)" stroke-width="1.3" stroke-linecap="round"/></svg> 목표 분석</div>
           <div class="ai-content" id="ai-text"></div>
         </div>
         <!-- 일별 기록 -->
@@ -2018,6 +2030,7 @@ const BUILT_IN_HOLIDAYS = {
     '2026-12-25':'성탄절'
   }
 };
+const PM_DAY_LABELS = {1:'월',2:'화',4:'목',5:'금'};
 
 function getMonthTarget(ym){ var mo=parseInt(ym.slice(5,7)); if(incSettings.monthly&&incSettings.monthly[mo])return incSettings.monthly[mo]; return mo>=7?(incSettings.h2||1300):(incSettings.h1||1000); }
 function getGrade(pts,ym){ const g=parseInt(ym.slice(5,7))>=7?GRADE_H2:GRADE_H1; return g.find(x=>pts>=x.min)||g[g.length-1]; }
@@ -2693,7 +2706,8 @@ function normalizeWorkGoalSettings(){
     amPoint:+rawGoal.amPoint||DEFAULT_WORK_GOAL.amPoint,
     pmPoint:+rawGoal.pmPoint||DEFAULT_WORK_GOAL.pmPoint,
     pmDays:hasPmDays?pmDays:[...DEFAULT_WORK_GOAL.pmDays],
-    roundTo:+rawGoal.roundTo||DEFAULT_WORK_GOAL.roundTo
+    roundTo:+rawGoal.roundTo||DEFAULT_WORK_GOAL.roundTo,
+    pmWeekOverrides:rawGoal.pmWeekOverrides||{}
   };
   incSettings.vacations=Array.isArray(incSettings.vacations)?[...new Set(incSettings.vacations)].sort():[];
   const h=incSettings.holidayOverrides||{};
@@ -2719,6 +2733,15 @@ function getHolidayName(dateKey){
   return item?item.name:'';
 }
 function getSaturdayOrdinal(d){return Math.floor((d.getDate()-1)/7)+1;}
+function getWeekOfMonth(d){return Math.floor((d.getDate()-1)/7)+1;}
+function getPmDaysForWeek(ym,weekNo){
+  const goal=getWorkGoalSettings();
+  const monthly=goal.pmWeekOverrides&&goal.pmWeekOverrides[ym];
+  if(monthly&&Object.prototype.hasOwnProperty.call(monthly,String(weekNo))){
+    return (monthly[String(weekNo)]||[]).map(Number).filter(d=>PM_DAY_LABELS[d]);
+  }
+  return goal.pmDays||[];
+}
 function getWorkSessionForDate(dateKey){
   normalizeWorkGoalSettings();
   const d=new Date(dateKey+'T00:00:00');
@@ -2738,7 +2761,7 @@ function getWorkSessionForDate(dateKey){
   }
   if(dow===3)return{am:1,pm:0,type:'am',reason:'수요일 오전'};
   if(dow>=1&&dow<=5){
-    const hasPm=getWorkGoalSettings().pmDays.includes(dow);
+    const hasPm=getPmDaysForWeek(dateKey.slice(0,7),getWeekOfMonth(d)).includes(dow);
     return{am:1,pm:hasPm?1:0,type:hasPm?'full':'am',reason:hasPm?'오전+오후':'오전'};
   }
   return{am:0,pm:0,type:'off',reason:'휴무'};
@@ -2784,6 +2807,25 @@ function syncWorkGoalInputs(){
   if(am)am.value=goal.amPoint;if(pm)pm.value=goal.pmPoint;
   document.querySelectorAll('#wg-pm-days input[type="checkbox"]').forEach(cb=>{cb.checked=goal.pmDays.includes(+cb.value);});
 }
+function renderPmWeekPlanner(){
+  const wrap=document.getElementById('wg-pm-weekly');
+  if(!wrap||!incViewMonth)return;
+  const y=+incViewMonth.slice(0,4),m=+incViewMonth.slice(5,7);
+  const daysInMonth=new Date(y,m,0).getDate();
+  const weekCount=Math.ceil(daysInMonth/7);
+  const goal=getWorkGoalSettings();
+  const monthOverrides=(goal.pmWeekOverrides&&goal.pmWeekOverrides[incViewMonth])||{};
+  const rows=[];
+  for(let w=1;w<=weekCount;w++){
+    const start=(w-1)*7+1,end=Math.min(w*7,daysInMonth);
+    const hasOverride=Object.prototype.hasOwnProperty.call(monthOverrides,String(w));
+    const days=getPmDaysForWeek(incViewMonth,w);
+    const boxes=[1,2,4,5].map(d=>`<label class="goal-check"><input type="checkbox" data-week="${w}" value="${d}" ${days.includes(d)?'checked':''} onchange="savePmWeekOverride(${w})"/>${PM_DAY_LABELS[d]}</label>`).join('');
+    const reset=hasOverride?`<button class="goal-week-reset" onclick="clearPmWeekOverride(${w})">기본</button>`:`<span class="goal-sub">기본</span>`;
+    rows.push(`<div class="goal-week-row"><div class="goal-week-label">${w}주차<br><span class="goal-sub">${start}-${end}일</span></div><div class="goal-week-days">${boxes}</div>${reset}</div>`);
+  }
+  wrap.innerHTML=rows.join('');
+}
 function saveWorkGoalSettings(showToast){
   normalizeWorkGoalSettings();
   const am=document.getElementById('wg-am-point'),pm=document.getElementById('wg-pm-point');
@@ -2798,6 +2840,25 @@ function saveWorkGoalSettings(showToast){
   },{merge:true}).catch(function(){});
   refreshIncentiveUI();
   if(showToast!==false)toast('추천 목표 설정 저장 완료');
+}
+function savePmWeekOverride(weekNo){
+  normalizeWorkGoalSettings();
+  const checked=[...document.querySelectorAll(`#wg-pm-weekly input[data-week="${weekNo}"]:checked`)].map(cb=>+cb.value);
+  if(!incSettings.workGoal.pmWeekOverrides)incSettings.workGoal.pmWeekOverrides={};
+  if(!incSettings.workGoal.pmWeekOverrides[incViewMonth])incSettings.workGoal.pmWeekOverrides[incViewMonth]={};
+  incSettings.workGoal.pmWeekOverrides[incViewMonth][String(weekNo)]=checked;
+  saveWorkGoalSettings(false);
+  toast(`${weekNo}주차 오후근무 저장 완료`);
+}
+function clearPmWeekOverride(weekNo){
+  normalizeWorkGoalSettings();
+  const monthly=incSettings.workGoal.pmWeekOverrides&&incSettings.workGoal.pmWeekOverrides[incViewMonth];
+  if(monthly){
+    delete monthly[String(weekNo)];
+    if(!Object.keys(monthly).length)delete incSettings.workGoal.pmWeekOverrides[incViewMonth];
+  }
+  saveWorkGoalSettings(false);
+  toast(`${weekNo}주차 기본 요일 적용`);
 }
 function metricHtml(label,value,accent){return`<div class="goal-metric"><div class="goal-metric-label">${label}</div><div class="goal-metric-value${accent?' accent':''}">${value}</div></div>`;}
 function renderWorkGoalPlanner(){
@@ -2815,6 +2876,7 @@ function renderWorkGoalPlanner(){
   ].join('');
   const note=document.getElementById('wg-summary-note');
   if(note)note.textContent=`${incViewMonth} 예상 ${plan.expected.toFixed(1)}p = 오전 ${plan.amSessions}회×${goal.amPoint}p + 오후 ${plan.pmSessions}회×${goal.pmPoint}p, ${goal.roundTo}p 단위 반올림`;
+  renderPmWeekPlanner();
   renderGoalLists();
 }
 function renderGoalLists(){
