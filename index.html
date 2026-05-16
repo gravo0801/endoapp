@@ -2850,7 +2850,22 @@ function getHolidayName(dateKey){
   return item?item.name:'';
 }
 function getSaturdayOrdinal(d){return Math.floor((d.getDate()-1)/7)+1;}
-function getWeekOfMonth(d){return Math.floor((d.getDate()-1)/7)+1;}
+function getMonthWeekRanges(y,m){
+  var daysInMonth=new Date(y,m,0).getDate();
+  var firstDow=new Date(y,m-1,1).getDay(); // 0=Sun
+  var firstSunday=firstDow===0?1:1+(7-firstDow);
+  if(firstSunday>daysInMonth)firstSunday=daysInMonth;
+  var ranges=[{week:1,start:1,end:firstSunday}];
+  var wn=2,ws=firstSunday+1;
+  while(ws<=daysInMonth){ranges.push({week:wn,start:ws,end:Math.min(ws+6,daysInMonth)});wn++;ws+=7;}
+  return ranges;
+}
+function getWeekOfMonth(d){
+  var ranges=getMonthWeekRanges(d.getFullYear(),d.getMonth()+1);
+  var day=d.getDate();
+  for(var i=0;i<ranges.length;i++){if(day>=ranges[i].start&&day<=ranges[i].end)return ranges[i].week;}
+  return ranges.length;
+}
 function getPmDaysForWeek(ym,weekNo){
   const goal=getWorkGoalSettings();
   const monthly=goal.pmWeekOverrides&&goal.pmWeekOverrides[ym];
@@ -2928,18 +2943,17 @@ function renderPmWeekPlanner(){
   const wrap=document.getElementById('wg-pm-weekly');
   if(!wrap||!incViewMonth)return;
   const y=+incViewMonth.slice(0,4),m=+incViewMonth.slice(5,7);
-  const daysInMonth=new Date(y,m,0).getDate();
-  const weekCount=Math.ceil(daysInMonth/7);
+  const weekRanges=getMonthWeekRanges(y,m);
   const goal=getWorkGoalSettings();
   const monthOverrides=(goal.pmWeekOverrides&&goal.pmWeekOverrides[incViewMonth])||{};
   const rows=[];
-  for(let w=1;w<=weekCount;w++){
-    const start=(w-1)*7+1,end=Math.min(w*7,daysInMonth);
+  for(const rng of weekRanges){
+    const w=rng.week;
     const hasOverride=Object.prototype.hasOwnProperty.call(monthOverrides,String(w));
     const days=getPmDaysForWeek(incViewMonth,w);
     const boxes=[1,2,4,5].map(d=>`<label class="goal-check"><input type="checkbox" data-week="${w}" value="${d}" ${days.includes(d)?'checked':''} onchange="savePmWeekOverride(${w})"/>${PM_DAY_LABELS[d]}</label>`).join('');
     const reset=hasOverride?`<button class="goal-week-reset" onclick="clearPmWeekOverride(${w})">기본</button>`:`<span class="goal-sub">기본</span>`;
-    rows.push(`<div class="goal-week-row"><div class="goal-week-label">${w}주차<br><span class="goal-sub">${start}-${end}일</span></div><div class="goal-week-days">${boxes}</div>${reset}</div>`);
+    rows.push(`<div class="goal-week-row"><div class="goal-week-label">${w}주차<br><span class="goal-sub">${rng.start}~${rng.end}일</span></div><div class="goal-week-days">${boxes}</div>${reset}</div>`);
   }
   wrap.innerHTML=rows.join('');
 }
