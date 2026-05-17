@@ -1141,8 +1141,8 @@ html,body{height:100%;font-family:'Noto Sans KR',sans-serif;background:var(--sb)
                 <div class="goal-sub" style="margin-top:6px;">주차별 설정이 없는 주에만 적용됩니다.</div>
               </div>
               <div class="goal-box" style="grid-column:1 / -1;">
-                <div class="goal-box-title">이번 달 주차별 오후근무</div>
-                <div class="goal-sub" style="margin-bottom:8px;">매주 오후근무 요일이 다르면 여기서 주차별로 체크하세요. 수요일·토요일은 오전근무 기준으로 둡니다.</div>
+                <div class="goal-box-title">이번 달 오후근무 날짜</div>
+                <div class="goal-sub" style="margin-bottom:8px;">실제 오후근무한 날짜를 체크하세요. 체크한 날짜 수가 아래 오후근무 횟수와 추천 목표에 그대로 반영됩니다.</div>
                 <div class="goal-week-table" id="wg-pm-weekly"></div>
               </div>
               <div class="goal-box">
@@ -2824,7 +2824,8 @@ function normalizeWorkGoalSettings(){
     pmPoint:+rawGoal.pmPoint||DEFAULT_WORK_GOAL.pmPoint,
     pmDays:hasPmDays?pmDays:[...DEFAULT_WORK_GOAL.pmDays],
     roundTo:+rawGoal.roundTo||DEFAULT_WORK_GOAL.roundTo,
-    pmWeekOverrides:rawGoal.pmWeekOverrides||{}
+    pmWeekOverrides:rawGoal.pmWeekOverrides||{},
+    pmDateOverrides:rawGoal.pmDateOverrides||{}
   };
   incSettings.vacations=Array.isArray(incSettings.vacations)?[...new Set(incSettings.vacations)].sort():[];
   const h=incSettings.holidayOverrides||{};
@@ -2874,6 +2875,14 @@ function getPmDaysForWeek(ym,weekNo){
   }
   return goal.pmDays||[];
 }
+function hasPmDateOverrides(ym){
+  const goal=getWorkGoalSettings();
+  return !!(goal.pmDateOverrides&&Object.prototype.hasOwnProperty.call(goal.pmDateOverrides,ym));
+}
+function getPmDatesForMonth(ym){
+  const goal=getWorkGoalSettings();
+  return (goal.pmDateOverrides&&goal.pmDateOverrides[ym]||[]).slice().sort();
+}
 function getWorkSessionForDate(dateKey){
   normalizeWorkGoalSettings();
   const d=new Date(dateKey+'T00:00:00');
@@ -2893,7 +2902,8 @@ function getWorkSessionForDate(dateKey){
   }
   if(dow===3)return{am:1,pm:0,type:'am',reason:'수요일 오전'};
   if(dow>=1&&dow<=5){
-    const hasPm=getPmDaysForWeek(dateKey.slice(0,7),getWeekOfMonth(d)).includes(dow);
+    const ym=dateKey.slice(0,7);
+    const hasPm=hasPmDateOverrides(ym)?getPmDatesForMonth(ym).includes(dateKey):getPmDaysForWeek(ym,getWeekOfMonth(d)).includes(dow);
     return{am:1,pm:hasPm?1:0,type:hasPm?'full':'am',reason:hasPm?'오전+오후':'오전'};
   }
   return{am:0,pm:0,type:'off',reason:'휴무'};
@@ -2944,18 +2954,44 @@ function renderPmWeekPlanner(){
   if(!wrap||!incViewMonth)return;
   const y=+incViewMonth.slice(0,4),m=+incViewMonth.slice(5,7);
   const weekRanges=getMonthWeekRanges(y,m);
-  const goal=getWorkGoalSettings();
-  const monthOverrides=(goal.pmWeekOverrides&&goal.pmWeekOverrides[incViewMonth])||{};
+  const checkedDates=new Set(hasPmDateOverrides(incViewMonth)?getPmDatesForMonth(incViewMonth):getDefaultPmDatesForMonth(incViewMonth));
   const rows=[];
   for(const rng of weekRanges){
     const w=rng.week;
-    const hasOverride=Object.prototype.hasOwnProperty.call(monthOverrides,String(w));
-    const days=getPmDaysForWeek(incViewMonth,w);
-    const boxes=[1,2,4,5].map(d=>`<label class="goal-check"><input type="checkbox" data-week="${w}" value="${d}" ${days.includes(d)?'checked':''} onchange="savePmWeekOverride(${w})"/>${PM_DAY_LABELS[d]}</label>`).join('');
-    const reset=hasOverride?`<button class="goal-week-reset" onclick="clearPmWeekOverride(${w})">기본</button>`:`<span class="goal-sub">기본</span>`;
+    const boxes=[];
+    for(let day=rng.start;day<=rng.end;day++){
+      const key=isoDate(y,m,day);
+      const dt=new Date(key+'T00:00:00');
+      const dow=dt.getDay();
+      if(!PM_DAY_LABELS[dow])continue;
+      const disabled=!isPmSelectableDate(key);
+      const label=String(day)+'일 '+PM_DAY_LABELS[dow];
+      boxes.push(`<label class="goal-check${disabled?' off':''}"><input type="checkbox" data-date="${key}" ${checkedDates.has(key)?'checked':''} ${disabled?'disabled':''} onchange="savePmDateOverrides()"/>${label}</label>`);
+    }
+    const reset=hasPmDateOverrides(incViewMonth)?`<button class="goal-week-reset" onclick="clearPmDateOverrides()">기본</button>`:`<span class="goal-sub">기본</span>`;
     rows.push(`<div class="goal-week-row"><div class="goal-week-label">${w}주차<br><span class="goal-sub">${rng.start}~${rng.end}일</span></div><div class="goal-week-days">${boxes}</div>${reset}</div>`);
   }
   wrap.innerHTML=rows.join('');
+}
+function getDefaultPmDatesForMonth(ym){
+  const y=+ym.slice(0,4),m=+ym.slice(5,7);
+  const daysInMonth=new Date(y,m,0).getDate();
+  const arr=[];
+  for(let day=1;day<=daysInMonth;day++){
+    const key=isoDate(y,m,day);
+    const d=new Date(key+'T00:00:00');
+    if(isPmSelectableDate(key)&&getPmDaysForWeek(ym,getWeekOfMonth(d)).includes(d.getDay()))arr.push(key);
+  }
+  return arr;
+}
+function isPmSelectableDate(key){
+  const d=new Date(key+'T00:00:00'),dow=d.getDay();
+  if(!PM_DAY_LABELS[dow])return false;
+  if((incSettings.vacations||[]).includes(key))return false;
+  if(getHolidayName(key))return false;
+  const override=incSettings.workdayOverrides&&incSettings.workdayOverrides[key];
+  if(override==='off'||override==='am')return false;
+  return true;
 }
 function saveWorkGoalSettings(showToast){
   normalizeWorkGoalSettings();
@@ -2990,6 +3026,20 @@ function clearPmWeekOverride(weekNo){
   }
   saveWorkGoalSettings(false);
   toast(`${weekNo}주차 기본 요일 적용`);
+}
+function savePmDateOverrides(){
+  normalizeWorkGoalSettings();
+  const dates=[...document.querySelectorAll('#wg-pm-weekly input[data-date]:checked')].map(cb=>cb.getAttribute('data-date')).sort();
+  if(!incSettings.workGoal.pmDateOverrides)incSettings.workGoal.pmDateOverrides={};
+  incSettings.workGoal.pmDateOverrides[incViewMonth]=dates;
+  saveWorkGoalSettings(false);
+  toast(`오후근무 ${dates.length}회 반영 완료`);
+}
+function clearPmDateOverrides(){
+  normalizeWorkGoalSettings();
+  if(incSettings.workGoal.pmDateOverrides)delete incSettings.workGoal.pmDateOverrides[incViewMonth];
+  saveWorkGoalSettings(false);
+  toast('기본 오후근무 요일 적용');
 }
 function metricHtml(label,value,accent){return`<div class="goal-metric"><div class="goal-metric-label">${label}</div><div class="goal-metric-value${accent?' accent':''}">${value}</div></div>`;}
 function renderWorkGoalPlanner(){
