@@ -1318,10 +1318,10 @@ html,body{height:100%;font-family:'Noto Sans KR',sans-serif;background:var(--sb)
               </div>
             </div>
           </div>
-          <!-- 오늘 총 점수 -->
+          <!-- 현재 탭 점수 -->
           <div class="inc-today-pts">
             <div>
-              <div class="inc-today-pts-lbl">오늘 총 점수</div>
+              <div class="inc-today-pts-lbl" id="cnt-session-label">오전 점수</div>
               <div style="font-size:10px;color:var(--text3);margin-top:2px;" id="cnt-pts-breakdown">EGD 0 + CFS 0 + Bx 0 + CPP 0 + CLO 0</div>
             </div>
             <div class="inc-today-pts-val" id="cnt-calc-pts">0.0p</div>
@@ -2035,24 +2035,24 @@ const BUILT_IN_HOLIDAYS = {
     '2026-12-25':'성탄절'
   }
 };
-const APP_BUILD = '2026-05-17-auth-redirect-v2';
+const APP_BUILD = '2026-05-18-daily-session-save-v1';
 const PM_DAY_LABELS = {1:'월',2:'화',4:'목',5:'금'};
 
 function getMonthTarget(ym){ var mo=parseInt(ym.slice(5,7)); if(incSettings.monthly&&incSettings.monthly[mo])return incSettings.monthly[mo]; return mo>=7?(incSettings.h2||1300):(incSettings.h1||1000); }
 function getGrade(pts,ym){ const g=parseInt(ym.slice(5,7))>=7?GRADE_H2:GRADE_H1; return g.find(x=>pts>=x.min)||g[g.length-1]; }
 
-function init() {
+async function init() {
   document.getElementById('inp-date').value = TODAY;
   const adrDt=document.getElementById('adr-date'); if(adrDt)adrDt.value=TODAY;
   document.getElementById('cnt-sub').textContent = `누적 기록 현황 · 오늘 ${TODAY}`;
   incViewMonth = TODAY.slice(0,7);
-  loadAllDays();
+  await loadIncentiveSettings();
+  await loadAllDays();
+  loadDayData(document.getElementById('inp-date').value || TODAY);
   loadAllCases();
   loadAllNotes();
   loadAllJournal();
   loadAllLegal();
-  loadIncentiveSettings();
-  loadDayData(TODAY);
 }
 
 // ══════════════════════════════════
@@ -2506,11 +2506,19 @@ function calcTodayPts() {
   var amEl=document.getElementById('am-pts-show'); if(amEl) amEl.textContent=am_pts+'p';
   var pmEl=document.getElementById('pm-pts-show'); if(pmEl) pmEl.textContent=pm_pts+'p';
   var totalEl=document.getElementById('total-pts-display'); if(totalEl) totalEl.textContent=total_pts.toFixed(1);
-  var ptsEl=document.getElementById('cnt-calc-pts'); if(ptsEl) ptsEl.textContent=total_pts.toFixed(1)+'p';
+  var isPmSession = currentSession === 'pm';
+  var session_pts = isPmSession ? pm_pts : am_pts;
+  var ptsEl=document.getElementById('cnt-calc-pts'); if(ptsEl) ptsEl.textContent=session_pts.toFixed(1)+'p';
+  var labelEl=document.getElementById('cnt-session-label'); if(labelEl) labelEl.textContent=isPmSession?'오후 점수':'오전 점수';
   var bdEl=document.getElementById('cnt-pts-breakdown');
   if(bdEl){
-    var t_egd=am_egd+pm_egd,t_cfs=am_cfs+pm_cfs,t_bxe=am_bxe+pm_bxe,t_bxc=am_bxc+pm_bxc,t_cpp=am_cpp+pm_cpp,t_clo=am_clo+pm_clo;
-    bdEl.textContent='EGD '+t_egd+' + CFS '+t_cfs+' + Bx '+(t_bxe+t_bxc)+' + CPP '+t_cpp+' + CLO '+t_clo;
+    var s_egd=isPmSession?pm_egd:am_egd;
+    var s_cfs=isPmSession?pm_cfs:am_cfs;
+    var s_bxe=isPmSession?pm_bxe:am_bxe;
+    var s_bxc=isPmSession?pm_bxc:am_bxc;
+    var s_cpp=isPmSession?pm_cpp:am_cpp;
+    var s_clo=isPmSession?pm_clo:am_clo;
+    bdEl.textContent='EGD '+s_egd+' + CFS '+s_cfs+' + Bx '+(s_bxe+s_bxc)+' + CPP '+s_cpp+' + CLO '+s_clo;
   }
   var badge=document.getElementById('work-type-badge');
   if(badge){
