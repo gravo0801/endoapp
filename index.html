@@ -30,6 +30,14 @@ const firebaseConfig = {
   appId: "1:536815047003:web:729c08e78b7d669ac20a7e"
 };
 
+function fmtLocalDate(date) {
+  var d = date instanceof Date ? date : new Date(date);
+  var y = d.getFullYear();
+  var m = String(d.getMonth() + 1).padStart(2, '0');
+  var day = String(d.getDate()).padStart(2, '0');
+  return y + '-' + m + '-' + day;
+}
+
 // ═══════════════════════════════════════════════════════
 //  ADR / PDR 시스템
 // ═══════════════════════════════════════════════════════
@@ -40,10 +48,6 @@ function setAdrTab(mode, el) {
   document.querySelectorAll('.adr-tab').forEach(function(t){t.classList.remove('on');});
   el.classList.add('on');
   refreshAdrUI();
-}
-
-function onAdrDateChange() {
-  updateAdrPreview();
 }
 
 function updateAdrPreview() {
@@ -137,10 +141,10 @@ function refreshAdrUI() {
     // 이번 주 (월~일)
     var weekStart = new Date(now);
     weekStart.setDate(now.getDate() - now.getDay() + (now.getDay()===0?-6:1));
-    var ws = weekStart.toISOString().slice(0,10);
+    var ws = fmtLocalDate(weekStart);
     var weekEnd = new Date(weekStart);
     weekEnd.setDate(weekStart.getDate()+6);
-    var we = weekEnd.toISOString().slice(0,10);
+    var we = fmtLocalDate(weekEnd);
     filtered = allDays.filter(function(d){return d.key>=ws && d.key<=we;});
   }
 
@@ -183,7 +187,7 @@ function refreshAdrUI() {
     for (var i=0; i<7; i++) {
       var d2 = new Date(ws2);
       d2.setDate(ws2.getDate()+i);
-      var k = d2.toISOString().slice(0,10);
+      var k = fmtLocalDate(d2);
       var rec2 = allDays.find(function(d){return d.key===k;}) || {key:k,cfs:0,pdr:null,adr:null};
       weekRows.push({day:days[i], key:k, rec:rec2});
     }
@@ -2018,13 +2022,7 @@ function signOut() {
 // ══════════════════════════════════
 //  INIT
 // ══════════════════════════════════
-const TODAY = (function(){
-  const d = new Date();
-  const y = d.getFullYear();
-  const m = String(d.getMonth()+1).padStart(2,'0');
-  const day = String(d.getDate()).padStart(2,'0');
-  return y+'-'+m+'-'+day;
-})();
+const TODAY = fmtLocalDate(new Date());
 const WD = ['일','월','화','수','목','금','토'];
 const NUMS = ['①','②','③','④','⑤','⑥','⑦','⑧','⑨','⑩'];
 let allDays = [], allCases = [];
@@ -2064,7 +2062,7 @@ const BUILT_IN_HOLIDAYS = {
     '2026-12-25':'성탄절'
   }
 };
-const APP_BUILD = '2026-06-07-mobile-nav-stability-v1';
+const APP_BUILD = '2026-06-10-stability-fixes-v1';
 const PM_DAY_LABELS = {1:'월',2:'화',4:'목',5:'금'};
 
 function getMonthTarget(ym){ var mo=parseInt(ym.slice(5,7)); if(incSettings.monthly&&incSettings.monthly[mo])return incSettings.monthly[mo]; return mo>=7?(incSettings.h2||1300):(incSettings.h1||1000); }
@@ -2284,14 +2282,21 @@ function tagSearch(t) { showList(); cSearch=t; document.getElementById('sinp').v
 
 async function delCase(id,name) {
   if (!confirm((name||'케이스')+'을(를) 삭제하시겠습니까?')) return;
-  // Delete photos from Storage
-  const snap = await casesCol(currentUid).doc(id).get();
-  if (snap.exists) {
-    const photos = snap.data().photos||[];
-    // 사진 서브컬렉션은 케이스 문서 삭제 시 자동 정리되지 않음 (수동 정리 필요)
+  try {
+    const ref = casesCol(currentUid).doc(id);
+    let photoSnap = await ref.collection('photos').limit(450).get();
+    while (!photoSnap.empty) {
+      const batch = db.batch();
+      photoSnap.docs.forEach(function(doc){ batch.delete(doc.ref); });
+      await batch.commit();
+      if (photoSnap.size < 450) break;
+      photoSnap = await ref.collection('photos').limit(450).get();
+    }
+    await ref.delete();
+    await loadAllCases(); showList(); toast('삭제 완료');
+  } catch(e) {
+    toast('삭제 오류: '+e.message);
   }
-  await casesCol(currentUid).doc(id).delete();
-  await loadAllCases(); showList(); toast('삭제 완료');
 }
 
 // ── FORM ──
@@ -2490,19 +2495,14 @@ function renderLb() {
 }
 function lbNav(d) { lbIdx=Math.max(0,Math.min(lbPhotos.length-1,lbIdx+d)); renderLb(); }
 function closeLb() { document.getElementById('lb').classList.remove('open'); }
-document.addEventListener('keydown',e=>{
-  if(e.key==='Escape') closeLb();
-  if(e.key==='ArrowLeft') lbNav(-1);
-  if(e.key==='ArrowRight') lbNav(1);
-});
 
 // ══════════════════════════════════
 //  HELPERS
 // ══════════════════════════════════
 function adj(id,d) { const el=document.getElementById(id); el.value=Math.max(0,(+el.value||0)+d); }
 function toast(msg) { const el=document.getElementById('toast'); el.textContent=msg; el.classList.add('sh'); setTimeout(()=>el.classList.remove('sh'),2600); }
-function escH(s) { return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-function escA(s) { return(s||'').replace(/"/g,'&quot;'); }
+function escH(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function escA(s) { return escH(s).replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
 
 // ══ PTS JS ══
 function adjInc(id, d) {
@@ -2670,7 +2670,7 @@ function renderHist() {
 
 function renderChart() {
   const days14=[];
-  for(let i=13;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);const k=d.toISOString().slice(0,10);days14.push(allDays.find(r=>r.key===k)||{key:k,egd:0,cfs:0,bxe:0,bxc:0});}
+  for(let i=13;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);const k=fmtLocalDate(d);days14.push(allDays.find(r=>r.key===k)||{key:k,egd:0,cfs:0,bxe:0,bxc:0});}
   const maxVal=Math.max(...days14.map(d=>(d.egd||0)+(d.cfs||0)+(d.bxe||0)+(d.bxc||0)),1);
   const CHART_H=120;
   const scale=v=>v>0?Math.max(Math.round((v/maxVal)*CHART_H),4):0;
@@ -2719,10 +2719,31 @@ async function saveEdit() {
   const cpp=+document.getElementById('ecpp')?.value||0;
   const clo=+document.getElementById('eclo')?.value||0;
   const pts=Math.round((egd*1+cfs*2+bxe*0.5+bxc*0.5+cpp*1+clo*0.5)*10)/10;
-  await daysCol(currentUid).doc(key).set({key,month:key.slice(0,7),egd,cfs,bxe,bxc,cpp,clo,pts});
-  closeModal(); await loadAllDays();
-  loadDayData(document.getElementById('inp-date').value);
-  toast(`${key} 수정 완료`);
+  try {
+    const ref = daysCol(currentUid).doc(key);
+    const snap = await ref.get();
+    const prev = snap.exists ? snap.data() : {};
+    const split = function(total, pmKey) {
+      const prevPm = Math.max(0, +prev[pmKey] || 0);
+      const pm = Math.min(total, prevPm);
+      return { am: total - pm, pm: pm };
+    };
+    const sEgd=split(egd,'pm_egd'), sCfs=split(cfs,'pm_cfs');
+    const sBxe=split(bxe,'pm_bxe'), sBxc=split(bxc,'pm_bxc');
+    const sCpp=split(cpp,'pm_cpp'), sClo=split(clo,'pm_clo');
+    const pmTotal=sEgd.pm+sCfs.pm+sBxe.pm+sBxc.pm+sCpp.pm+sClo.pm;
+    await ref.set({
+      key,month:key.slice(0,7),egd,cfs,bxe,bxc,cpp,clo,pts,
+      am_egd:sEgd.am,am_cfs:sCfs.am,am_bxe:sBxe.am,am_bxc:sBxc.am,am_cpp:sCpp.am,am_clo:sClo.am,
+      pm_egd:sEgd.pm,pm_cfs:sCfs.pm,pm_bxe:sBxe.pm,pm_bxc:sBxc.pm,pm_cpp:sCpp.pm,pm_clo:sClo.pm,
+      fullDay: pmTotal > 0
+    }, { merge:true });
+    closeModal(); await loadAllDays();
+    loadDayData(document.getElementById('inp-date').value);
+    toast(`${key} 수정 완료`);
+  } catch(e) {
+    toast('수정 오류: '+e.message);
+  }
 }
 
 async function delDay(key) {
@@ -3254,8 +3275,9 @@ function refreshIncentiveUI() {
   if(el('is-today')) el('is-today').textContent=todayRec?todayRec.pts.toFixed(1):'0';
   if(el('is-avg'))   el('is-avg').textContent=avg.toFixed(1);
   if(el('is-daily-goal')) el('is-daily-goal').textContent=Math.max(0,dailyGoal).toFixed(1);
-  const weekStart=new Date();weekStart.setDate(weekStart.getDate()-weekStart.getDay());
-  const weekPts=incDays.filter(d=>d.date>=weekStart.toISOString().slice(0,10)).reduce((s,d)=>s+(d.pts||0),0);
+  const weekStart=new Date();weekStart.setDate(weekStart.getDate()-weekStart.getDay()+(weekStart.getDay()===0?-6:1));
+  const weekStartKey=fmtLocalDate(weekStart);
+  const weekPts=incDays.filter(d=>(d.key||'')>=weekStartKey).reduce((s,d)=>s+(d.pts||0),0);
   if(el('is-week')) el('is-week').textContent=weekPts.toFixed(1);
   const sb=el('sb-incentive'); if(sb) sb.textContent=totalPts.toFixed(0)+'p';
   renderIncChart();
@@ -3514,9 +3536,38 @@ function showLegalView(v){
 }
 
 // Preview modal
-function openPreview(f){if(!f)return;const modal=document.getElementById('preview-modal');const cnt=document.getElementById('preview-content');const name=document.getElementById('preview-name');if(!modal||!cnt||!name)return;modal.classList.add('open');name.textContent=f.name||'파일';const isImg=f.isImg||(f.dataUrl&&f.dataUrl.startsWith('data:image'));if(isImg){cnt.innerHTML=`<img src="${f.dataUrl}" style="max-width:90vw;max-height:80vh;object-fit:contain;border-radius:8px;"/>`;}else if(f.type==='application/pdf'||(f.name&&f.name.toLowerCase().endsWith('.pdf'))){cnt.innerHTML=`<iframe src="${f.dataUrl}" style="width:88vw;height:80vh;border:none;border-radius:8px;background:#fff;"></iframe>`;}else{cnt.innerHTML=`<div style="background:var(--surface);border-radius:var(--r);padding:40px;text-align:center;"><svg width="48" height="48" viewBox="0 0 48 48" fill="none" stroke="white" stroke-width="1.3" style="margin:0 auto 16px;display:block;opacity:0.5"><path d="M12 4h18l14 14v26H12V4z" stroke-linecap="round" stroke-linejoin="round"/></svg><div style="color:rgba(255,255,255,0.7);font-size:14px;margin-bottom:10px;">${f.name}</div><div style="color:rgba(255,255,255,0.4);font-size:12px;">이 파일 형식은 미리보기를 지원하지 않습니다</div></div>`;}}
-function closePreview(){const modal=document.getElementById('preview-modal');if(modal)modal.classList.remove('open');const cnt=document.getElementById('preview-content');if(cnt)cnt.innerHTML='';}
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeLb();closePreview();}if(e.key==='ArrowLeft')lbNav(-1);if(e.key==='ArrowRight')lbNav(1);});
+function openPreview(f){
+  if(!f)return;
+  const modal=document.getElementById('preview-modal');
+  const cnt=document.getElementById('preview-content');
+  const name=document.getElementById('preview-name');
+  if(!modal||!cnt||!name)return;
+  modal.classList.add('open');
+  modal.style.display='flex';
+  name.textContent=f.name||'파일';
+  const isImg=f.isImg||(f.dataUrl&&f.dataUrl.startsWith('data:image'));
+  if(isImg){
+    cnt.innerHTML=`<img src="${f.dataUrl}" style="max-width:90vw;max-height:80vh;object-fit:contain;border-radius:8px;"/>`;
+  }else if(f.type==='application/pdf'||(f.name&&f.name.toLowerCase().endsWith('.pdf'))){
+    cnt.innerHTML=`<iframe src="${f.dataUrl}" style="width:88vw;height:80vh;border:none;border-radius:8px;background:#fff;"></iframe>`;
+  }else{
+    cnt.innerHTML=`<div style="background:var(--surface);border-radius:var(--r);padding:40px;text-align:center;"><svg width="48" height="48" viewBox="0 0 48 48" fill="none" stroke="white" stroke-width="1.3" style="margin:0 auto 16px;display:block;opacity:0.5"><path d="M12 4h18l14 14v26H12V4z" stroke-linecap="round" stroke-linejoin="round"/></svg><div style="color:rgba(255,255,255,0.7);font-size:14px;margin-bottom:10px;">${escH(f.name||'파일')}</div><div style="color:rgba(255,255,255,0.4);font-size:12px;">이 파일 형식은 미리보기를 지원하지 않습니다</div></div>`;
+  }
+}
+function closePreview(){
+  const modal=document.getElementById('preview-modal');
+  if(modal){modal.classList.remove('open');modal.style.display='none';}
+  const cnt=document.getElementById('preview-content');if(cnt)cnt.innerHTML='';
+}
+document.addEventListener('keydown',e=>{
+  const lb=document.getElementById('lb');
+  const modal=document.getElementById('preview-modal');
+  const lbOpen=!!(lb&&lb.classList.contains('open'));
+  const previewOpen=!!(modal&&modal.classList.contains('open'));
+  if(e.key==='Escape'){if(lbOpen)closeLb();if(previewOpen)closePreview();}
+  if(lbOpen&&e.key==='ArrowLeft')lbNav(-1);
+  if(lbOpen&&e.key==='ArrowRight')lbNav(1);
+});
 
 // Disease filter & tag filter stubs for cases
 let caseTagFilter='', caseDiseaseFilter='';
