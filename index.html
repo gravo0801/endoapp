@@ -50,14 +50,24 @@ function setAdrTab(mode, el) {
   refreshAdrUI();
 }
 
+// 자동 연동 이후 기록은 CPP가 PDR 용종 건수의 원천이다.
+// 기존 수동 PDR 기록은 해당 날짜를 다시 저장하기 전까지 보존한다.
+function getPdrCount(rec) {
+  if (!rec) return 0;
+  if (rec.pdrAuto === true) return +(rec.cpp || 0);
+  return rec.pdr != null ? +(rec.pdr || 0) : +(rec.cpp || 0);
+}
+
 function updateAdrPreview() {
   var date = document.getElementById('adr-date').value;
-  var pdrVal = +(document.getElementById('adr-pdr').value) || 0;
   var adrVal = +(document.getElementById('adr-adr').value) || 0;
   var preview = document.getElementById('adr-preview');
   if (!date) { if(preview) preview.textContent = '날짜를 선택하면 해당일 CFS 건수가 표시됩니다'; return; }
   var rec = allDays.find(function(d){return d.key === date;});
   var cfs = rec ? (rec.cfs||0) : 0;
+  var pdrVal = getPdrCount(rec);
+  var pdrInput = document.getElementById('adr-pdr');
+  if (pdrInput) pdrInput.value = pdrVal;
   var pdrPct = cfs > 0 ? (pdrVal/cfs*100).toFixed(1) : '-';
   var adrPct = cfs > 0 ? (adrVal/cfs*100).toFixed(1) : '-';
   var msg = date + ' 기록: CFS ' + cfs + '건';
@@ -78,22 +88,20 @@ function adjAdr(field, d) {
 async function saveAdrData() {
   var date = document.getElementById('adr-date').value;
   if (!date) { toast('날짜를 선택해주세요.'); return; }
-  var pdrVal = +(document.getElementById('adr-pdr').value) || 0;
   var adrVal = +(document.getElementById('adr-adr').value) || 0;
   try {
-    // merge 방식 - 기존 시술 데이터 유지
+    // PDR은 일별 CPP와 자동 연동되므로 ADR 병리 건수만 소급 저장
     await daysCol(currentUid).doc(date).set({
       key: date,
       month: date.slice(0,7),
-      pdr: pdrVal,
       adr: adrVal,
     }, { merge: true });
     // 로컬 allDays 즉시 업데이트
     var rec = allDays.find(function(d){return d.key===date;});
-    if (rec) { rec.pdr=pdrVal; rec.adr=adrVal; }
-    else { allDays.push({key:date, month:date.slice(0,7), pdr:pdrVal, adr:adrVal, egd:0, cfs:0}); }
+    if (rec) { rec.adr=adrVal; }
+    else { allDays.push({key:date, month:date.slice(0,7), adr:adrVal, egd:0, cfs:0, cpp:0}); }
     refreshAdrUI();
-    toast(date + ' ADR/PDR 저장 완료');
+    toast(date + ' ADR 건수 저장 완료');
   } catch(e) { toast('저장 오류: ' + e.message); }
 }
 
@@ -105,8 +113,13 @@ function onAdrDateChange() {
   if (rec) {
     var pdrEl = document.getElementById('adr-pdr');
     var adrEl = document.getElementById('adr-adr');
-    if(pdrEl) pdrEl.value = rec.pdr != null ? rec.pdr : 0;
+    if(pdrEl) pdrEl.value = getPdrCount(rec);
     if(adrEl) adrEl.value = rec.adr != null ? rec.adr : 0;
+  } else {
+    var emptyPdrEl = document.getElementById('adr-pdr');
+    var emptyAdrEl = document.getElementById('adr-adr');
+    if(emptyPdrEl) emptyPdrEl.value = 0;
+    if(emptyAdrEl) emptyAdrEl.value = 0;
   }
   updateAdrPreview();
 }
@@ -150,7 +163,7 @@ function refreshAdrUI() {
 
   // ── 합계 계산 ──
   var totalCfs = filtered.reduce(function(s,d){return s+(d.cfs||0);},0);
-  var totalPdr = filtered.reduce(function(s,d){return s+(d.pdr!=null?d.pdr:0);},0);
+  var totalPdr = filtered.reduce(function(s,d){return s+getPdrCount(d);},0);
   var totalAdr = filtered.reduce(function(s,d){return s+(d.adr!=null?d.adr:0);},0);
   var pdrPct = calcRate(totalPdr, totalCfs);
   var adrPct = calcRate(totalAdr, totalCfs);
@@ -168,8 +181,8 @@ function refreshAdrUI() {
   }
   var adrSub = document.getElementById('adr-rate-sub');
   var pdrSub = document.getElementById('pdr-rate-sub');
-  if(adrSub) adrSub.textContent = totalAdr+'명 / CFS '+totalCfs+'건';
-  if(pdrSub) pdrSub.textContent = totalPdr+'명 / CFS '+totalCfs+'건';
+  if(adrSub) adrSub.textContent = totalAdr+'건 / CFS '+totalCfs+'건';
+  if(pdrSub) pdrSub.textContent = totalPdr+'건 / CFS '+totalCfs+'건';
 
   // ── 테이블 렌더링 ──
   var header = document.getElementById('adr-period-header');
@@ -194,14 +207,14 @@ function refreshAdrUI() {
     if(tbody) tbody.innerHTML = weekRows.map(function(row){
       var rec=row.rec;
       var cfs=rec.cfs||0;
-      var pdr=rec.pdr!=null?rec.pdr:null;
+      var pdr=getPdrCount(rec);
       var adr=rec.adr!=null?rec.adr:null;
       var isT=row.key===TODAY;
       return '<tr>'
         +'<td><span style="">'+(isT?'<strong>':'')+row.key+'</strong> <span style="color:var(--text3);">('+row.day+')</span>'+(isT?'':'')+'</td>'
         +'<td>'+(cfs||'-')+'</td>'
-        +'<td>'+(cfs>0&&pdr!=null?pdr:'-')+'</td>'
-        +'<td>'+rateHTML(cfs>0&&pdr!=null?calcRate(pdr,cfs):null)+'</td>'
+        +'<td>'+(cfs>0?pdr:'-')+'</td>'
+        +'<td>'+rateHTML(cfs>0?calcRate(pdr,cfs):null)+'</td>'
         +'<td>'+(cfs>0&&adr!=null?adr:'-')+'</td>'
         +'<td>'+rateHTML(cfs>0&&adr!=null?calcRate(adr,cfs):null)+'</td>'
         +'</tr>';
@@ -225,16 +238,16 @@ function refreshAdrUI() {
     var WD2=['일','월','화','수','목','금','토'];
     if(tbody) tbody.innerHTML = monthRows.map(function(d){
       var cfs=d.cfs||0;
-      var pdr=d.pdr!=null?d.pdr:null;
+      var pdr=getPdrCount(d);
       var adr=d.adr!=null?d.adr:null;
       var dt2=new Date(d.key+'T00:00:00');
       var isT2=d.key===TODAY;
-      var hasPend = cfs>0 && (pdr===null||adr===null);
+      var hasPend = cfs>0 && adr===null;
       return '<tr>'
         +'<td><span style="font-size:11px;">'+(isT2?'<strong>':'')+d.key+(isT2?'</strong>':'')+' <span style="color:var(--text3);">'+WD2[dt2.getDay()]+'</span>'+(hasPend?' <span style="font-size:9px;color:var(--bxe-dark);">미입력</span>':'')+'</td>'
         +'<td>'+cfs+'</td>'
-        +'<td>'+(cfs>0&&pdr!=null?pdr:'-')+'</td>'
-        +'<td>'+rateHTML(cfs>0&&pdr!=null?calcRate(pdr,cfs):null)+'</td>'
+        +'<td>'+(cfs>0?pdr:'-')+'</td>'
+        +'<td>'+rateHTML(cfs>0?calcRate(pdr,cfs):null)+'</td>'
         +'<td>'+(cfs>0&&adr!=null?adr:'-')+'</td>'
         +'<td>'+rateHTML(cfs>0&&adr!=null?calcRate(adr,cfs):null)+'</td>'
         +'</tr>';
@@ -255,7 +268,7 @@ function getMonthlyAdrStats(monthsBack) {
     if (!ym) return;
     if (!stats[ym]) stats[ym] = {month:ym, cfs:0, pdr:0, adr:0, hasData:false};
     stats[ym].cfs += d.cfs || 0;
-    if (d.pdr != null) { stats[ym].pdr += d.pdr; stats[ym].hasData = true; }
+    if (d.cpp != null || d.pdr != null) { stats[ym].pdr += getPdrCount(d); stats[ym].hasData = true; }
     if (d.adr != null) { stats[ym].adr += d.adr; stats[ym].hasData = true; }
   });
   return Object.keys(stats).map(function(k){return stats[k];})
@@ -1022,6 +1035,24 @@ html,body{height:100%;font-family:'Noto Sans KR',sans-serif;background:var(--sb)
 .session-total .pts-unit{font-size:11px;color:var(--text3);margin-left:2px;}
 .full-day-badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:500;background:#D1FAE5;color:#047857;}
 .am-only-badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:500;background:#EBF4FF;color:#1D5FC8;}
+
+/* ── 시술 건수 대시보드 ── */
+.proc-dashboard{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px;margin-bottom:16px;}
+.proc-dashboard-head{display:flex;align-items:flex-end;justify-content:space-between;gap:10px;margin-bottom:12px;flex-wrap:wrap;}
+.proc-dashboard-title{font-size:13px;font-weight:700;color:var(--text);}
+.proc-dashboard-sub{font-size:10px;color:var(--text3);}
+.proc-dashboard-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;}
+.proc-card{background:var(--surface2);border:1px solid var(--border);border-radius:var(--rsm);padding:11px;min-width:0;}
+.proc-card-name{font-size:11px;font-weight:700;color:var(--text2);margin-bottom:9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.proc-periods{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;}
+.proc-period{background:var(--surface);border-radius:7px;padding:7px 4px;text-align:center;min-width:0;}
+.proc-period-label{font-size:9px;color:var(--text3);margin-bottom:3px;}
+.proc-period-value{font-family:'DM Mono',monospace;font-size:15px;font-weight:500;color:var(--text);}
+.proc-period-value.today{color:var(--egd-dark);}
+.adr-auto-input{background:var(--surface)!important;color:var(--cfs-dark)!important;font-weight:700;cursor:not-allowed;}
+.adr-definition-note{font-size:10px;line-height:1.6;color:var(--text3);background:var(--surface);border:1px dashed var(--border2);border-radius:var(--rsm);padding:8px 10px;margin-bottom:10px;}
+@media(max-width:900px){.proc-dashboard-grid{grid-template-columns:repeat(2,minmax(0,1fr));}}
+@media(max-width:520px){.proc-dashboard-grid{grid-template-columns:1fr;}.proc-dashboard{padding:12px;}}
 </style>
 </head>
 <body>
@@ -1236,6 +1267,17 @@ html,body{height:100%;font-family:'Noto Sans KR',sans-serif;background:var(--sb)
           <div class="scard be"><div class="stag tbe">조직검사 · 위</div><div class="snum nbe" id="sc-be">0</div><div class="slbl">누적 건수</div><div class="stoday" id="sc-bet">오늘 0건</div></div>
           <div class="scard bc"><div class="stag tbc">조직검사 · 대장</div><div class="snum nbc" id="sc-bc">0</div><div class="slbl">누적 건수</div><div class="stoday" id="sc-bct">오늘 0건</div></div>
         </div>
+        <!-- 항목별 일·주·월 시술 건수 -->
+        <section class="proc-dashboard" aria-labelledby="proc-dashboard-title">
+          <div class="proc-dashboard-head">
+            <div>
+              <div class="proc-dashboard-title" id="proc-dashboard-title">📊 시술 건수 대시보드</div>
+              <div class="proc-dashboard-sub">저장된 기록 기준 · 오늘 / 이번 주(월∼일) / 이번 달</div>
+            </div>
+            <div class="proc-dashboard-sub" id="proc-dashboard-range"></div>
+          </div>
+          <div class="proc-dashboard-grid" id="proc-dashboard-grid"></div>
+        </section>
         <!-- 일별 입력 -->
         <div class="ipanel" style="margin-bottom:16px;">
           <!-- 날짜 선택 -->
@@ -1391,35 +1433,34 @@ html,body{height:100%;font-family:'Noto Sans KR',sans-serif;background:var(--sb)
           <!-- 현재 기간 요약 -->
           <div class="adr-rate-grid">
             <div class="adr-rate-card">
-              <div class="adr-rate-lbl">📊 ADR (선종 발견율)</div>
+              <div class="adr-rate-lbl">📊 ADR 선종 건수 지표</div>
               <div class="adr-rate-val" id="adr-rate-val">-%</div>
-              <div class="adr-rate-sub" id="adr-rate-sub">선종 환자 / 전체 CFS</div>
+              <div class="adr-rate-sub" id="adr-rate-sub">선종 건수 / 전체 CFS</div>
             </div>
             <div class="adr-rate-card">
-              <div class="adr-rate-lbl">🫧 PDR (용종 발견율)</div>
+              <div class="adr-rate-lbl">🫧 PDR 용종 건수 지표</div>
               <div class="adr-rate-val" id="pdr-rate-val">-%</div>
-              <div class="adr-rate-sub" id="pdr-rate-sub">용종 환자 / 전체 CFS</div>
+              <div class="adr-rate-sub" id="pdr-rate-sub">용종 건수 / 전체 CFS</div>
             </div>
           </div>
 
           <!-- ADR 입력 (날짜 선택 + 소급 입력) -->
           <div style="background:var(--surface2);border-radius:var(--rsm);padding:14px;margin-bottom:12px;">
-            <div style="font-size:11px;font-weight:500;color:var(--text2);margin-bottom:10px;">📝 날짜별 ADR/PDR 기록</div>
+            <div style="font-size:11px;font-weight:500;color:var(--text2);margin-bottom:10px;">📝 날짜별 ADR/PDR 건수 기록</div>
+            <div class="adr-definition-note">PDR 용종 건수는 해당 날짜의 <strong>CPP 건수와 자동 연동</strong>됩니다. ADR은 병리 결과 확정 후 선종/이형성증 <strong>건수</strong>를 입력하세요. 아래 %는 환자 비율이 아닌 병변 건수÷CFS 지표입니다.</div>
             <div class="adr-input-row">
               <div class="adr-inp-group">
                 <span class="adr-inp-lbl">날짜 선택</span>
                 <input class="dinp" type="date" id="adr-date" style="font-size:12px;padding:6px 10px;" onchange="onAdrDateChange()"/>
               </div>
               <div class="adr-inp-group">
-                <span class="adr-inp-lbl">PDR 용종 환자수 <span style="font-size:9px;color:var(--text3);">(당일)</span></span>
+                <span class="adr-inp-lbl">PDR 용종 건수 <span style="font-size:9px;color:var(--cfs-dark);">(CPP 자동)</span></span>
                 <div class="adr-stepper">
-                  <button class="adr-btn" onclick="adjAdr('pdr',-1)">−</button>
-                  <input class="adr-inp" type="number" id="adr-pdr" value="0" min="0" oninput="updateAdrPreview()"/>
-                  <button class="adr-btn" onclick="adjAdr('pdr',1)">+</button>
+                  <input class="adr-inp adr-auto-input" type="number" id="adr-pdr" value="0" min="0" readonly aria-label="CPP에서 자동 계산된 PDR 용종 건수"/>
                 </div>
               </div>
               <div class="adr-inp-group">
-                <span class="adr-inp-lbl">ADR 선종/이형성증 환자수 <span style="font-size:9px;color:var(--cfs-dark);">(소급)</span></span>
+                <span class="adr-inp-lbl">ADR 선종/이형성증 건수 <span style="font-size:9px;color:var(--cfs-dark);">(소급)</span></span>
                 <div class="adr-stepper">
                   <button class="adr-btn" onclick="adjAdr('adr',-1)">−</button>
                   <input class="adr-inp" type="number" id="adr-adr" value="0" min="0" oninput="updateAdrPreview()"/>
@@ -1440,9 +1481,9 @@ html,body{height:100%;font-family:'Noto Sans KR',sans-serif;background:var(--sb)
                 <tr>
                   <th id="adr-period-header">날짜</th>
                   <th>CFS</th>
-                  <th>PDR수</th>
+                  <th>PDR 용종 건수</th>
                   <th>PDR%</th>
-                  <th>ADR수</th>
+                  <th>ADR 선종 건수</th>
                   <th>ADR%</th>
                 </tr>
               </thead>
@@ -1465,7 +1506,7 @@ html,body{height:100%;font-family:'Noto Sans KR',sans-serif;background:var(--sb)
             <div style="overflow-x:auto;max-height:240px;overflow-y:auto;">
               <table class="adr-stat-table">
                 <thead style="position:sticky;top:0;background:var(--surface);z-index:1;">
-                  <tr><th>월</th><th>CFS</th><th>PDR수</th><th>PDR%</th><th>ADR수</th><th>ADR%</th></tr>
+                  <tr><th>월</th><th>CFS</th><th>PDR 용종</th><th>PDR%</th><th>ADR 선종</th><th>ADR%</th></tr>
                 </thead>
                 <tbody id="adr-trend-tbody"></tbody>
               </table>
@@ -2034,6 +2075,14 @@ let incViewMonth = '';
 let incSettings = { h1:1000, h2:1300, monthly:[0,1000,1000,1000,1000,1000,1000,1300,1300,1300,1300,1300,1300] };
 let incDays = [];
 const POINT = { egd:1, cfs:2, bxe:0.5, bxc:0.5, cpp:1, clo:0.5 };
+const PROCEDURE_METRICS = [
+  {key:'egd', label:'위내시경 (EGD)', icon:'🟦'},
+  {key:'cfs', label:'대장내시경 (CFS)', icon:'🟩'},
+  {key:'bxe', label:'위 조직검사 (Bx-E)', icon:'🟨'},
+  {key:'bxc', label:'대장 조직검사 (Bx-C)', icon:'🟧'},
+  {key:'cpp', label:'용종절제술 (CPP)', icon:'🟥'},
+  {key:'clo', label:'CLO (헬리코박터)', icon:'🟪'}
+];
 const GRADE_H1 = [{g:'EX',min:1100,amt:'250만'},{g:'VG',min:1000,amt:'200만'},{g:'GD',min:900,amt:'150만'},{g:'NI',min:800,amt:'100만'},{g:'UN',min:0,amt:'50만'}];
 const GRADE_H2 = [{g:'EX',min:1300,amt:'250만'},{g:'VG',min:1200,amt:'200만'},{g:'GD',min:1100,amt:'150만'},{g:'NI',min:1000,amt:'100만'},{g:'UN',min:0,amt:'50만'}];
 const DEFAULT_WORK_GOAL = { amPoint:40, pmPoint:13, pmDays:[2,4], roundTo:10 };
@@ -2610,7 +2659,8 @@ async function saveDay() {
       am_egd, am_cfs, am_bxe, am_bxc, am_cpp, am_clo,
       pm_egd, pm_cfs, pm_bxe, pm_bxc, pm_cpp, pm_clo,
       fullDay: isFullDay,
-      pdr: existData.pdr ?? null,
+      pdr: cpp,
+      pdrAuto: true,
       adr: existData.adr ?? null,
     });
     await loadAllDays();
@@ -2634,6 +2684,36 @@ function updateStats() {
   const ct=document.getElementById('sc-ct'); if(ct) ct.textContent=`오늘 ${td?td.cfs||0:0}건`;
   const bt=document.getElementById('sc-bet'); if(bt) bt.textContent=`오늘 ${td?td.bxe||0:0}건`;
   const bct=document.getElementById('sc-bct'); if(bct) bct.textContent=`오늘${td?td.bxc||0:0}건`;
+  renderProcedureDashboard();
+}
+
+function renderProcedureDashboard() {
+  const grid=document.getElementById('proc-dashboard-grid');
+  if(!grid)return;
+  const now=new Date(TODAY+'T00:00:00');
+  const weekStart=new Date(now);
+  weekStart.setDate(now.getDate()-now.getDay()+(now.getDay()===0?-6:1));
+  const weekEnd=new Date(weekStart);
+  weekEnd.setDate(weekStart.getDate()+6);
+  const ws=fmtLocalDate(weekStart), we=fmtLocalDate(weekEnd), ym=TODAY.slice(0,7);
+  const todayRec=allDays.find(function(d){return d.key===TODAY;})||{};
+  const weekRows=allDays.filter(function(d){return d.key>=ws&&d.key<=we;});
+  const monthRows=allDays.filter(function(d){return (d.month||String(d.key||'').slice(0,7))===ym;});
+  const sum=function(rows,key){return rows.reduce(function(total,row){return total+(+row[key]||0);},0);};
+  grid.innerHTML=PROCEDURE_METRICS.map(function(metric){
+    const day=+todayRec[metric.key]||0;
+    const week=sum(weekRows,metric.key);
+    const month=sum(monthRows,metric.key);
+    return '<article class="proc-card">'
+      +'<div class="proc-card-name">'+metric.icon+' '+metric.label+'</div>'
+      +'<div class="proc-periods">'
+      +'<div class="proc-period"><div class="proc-period-label">오늘</div><div class="proc-period-value today">'+day.toLocaleString()+'</div></div>'
+      +'<div class="proc-period"><div class="proc-period-label">이번 주</div><div class="proc-period-value">'+week.toLocaleString()+'</div></div>'
+      +'<div class="proc-period"><div class="proc-period-label">이번 달</div><div class="proc-period-value">'+month.toLocaleString()+'</div></div>'
+      +'</div></article>';
+  }).join('');
+  const range=document.getElementById('proc-dashboard-range');
+  if(range)range.textContent=ws+' ~ '+we;
 }
 
 function renderHist() {
@@ -2736,7 +2816,9 @@ async function saveEdit() {
       key,month:key.slice(0,7),egd,cfs,bxe,bxc,cpp,clo,pts,
       am_egd:sEgd.am,am_cfs:sCfs.am,am_bxe:sBxe.am,am_bxc:sBxc.am,am_cpp:sCpp.am,am_clo:sClo.am,
       pm_egd:sEgd.pm,pm_cfs:sCfs.pm,pm_bxe:sBxe.pm,pm_bxc:sBxc.pm,pm_cpp:sCpp.pm,pm_clo:sClo.pm,
-      fullDay: pmTotal > 0
+      fullDay: pmTotal > 0,
+      pdr: cpp,
+      pdrAuto: true
     }, { merge:true });
     closeModal(); await loadAllDays();
     loadDayData(document.getElementById('inp-date').value);
