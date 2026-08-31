@@ -13,6 +13,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default"/>
 <meta name="theme-color" content="#0F1623"/>
 <title>EndoApp · 내시경 통합 관리</title>
+<script src="./procedure-stats.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Noto+Sans+KR:wght@400;500;700&family=DM+Serif+Display&display=swap" rel="stylesheet"/>
 
@@ -1272,7 +1273,7 @@ html,body{height:100%;font-family:'Noto Sans KR',sans-serif;background:var(--sb)
           <div class="proc-dashboard-head">
             <div>
               <div class="proc-dashboard-title" id="proc-dashboard-title">📊 시술 건수 대시보드</div>
-              <div class="proc-dashboard-sub">저장된 기록 기준 · 오늘 / 이번 주(월∼일) / 이번 달</div>
+              <div class="proc-dashboard-sub">저장된 기록 기준 · 오늘 / 최근 7일(오늘 포함) / 이번 달</div>
             </div>
             <div class="proc-dashboard-sub" id="proc-dashboard-range"></div>
           </div>
@@ -2690,15 +2691,11 @@ function updateStats() {
 function renderProcedureDashboard() {
   const grid=document.getElementById('proc-dashboard-grid');
   if(!grid)return;
-  const now=new Date(TODAY+'T00:00:00');
-  const weekStart=new Date(now);
-  weekStart.setDate(now.getDate()-now.getDay()+(now.getDay()===0?-6:1));
-  const weekEnd=new Date(weekStart);
-  weekEnd.setDate(weekStart.getDate()+6);
-  const ws=fmtLocalDate(weekStart), we=fmtLocalDate(weekEnd), ym=TODAY.slice(0,7);
-  const todayRec=allDays.find(function(d){return d.key===TODAY;})||{};
-  const weekRows=allDays.filter(function(d){return d.key>=ws&&d.key<=we;});
-  const monthRows=allDays.filter(function(d){return (d.month||String(d.key||'').slice(0,7))===ym;});
+  const periods=procedureStats.buildProcedurePeriods(allDays,TODAY);
+  const ws=periods.range.startKey, we=periods.range.endKey;
+  const todayRec=periods.todayRec;
+  const weekRows=periods.weekRows;
+  const monthRows=periods.monthRows;
   const sum=function(rows,key){return rows.reduce(function(total,row){return total+(+row[key]||0);},0);};
   grid.innerHTML=PROCEDURE_METRICS.map(function(metric){
     const day=+todayRec[metric.key]||0;
@@ -2708,7 +2705,7 @@ function renderProcedureDashboard() {
       +'<div class="proc-card-name">'+metric.icon+' '+metric.label+'</div>'
       +'<div class="proc-periods">'
       +'<div class="proc-period"><div class="proc-period-label">오늘</div><div class="proc-period-value today">'+day.toLocaleString()+'</div></div>'
-      +'<div class="proc-period"><div class="proc-period-label">이번 주</div><div class="proc-period-value">'+week.toLocaleString()+'</div></div>'
+      +'<div class="proc-period"><div class="proc-period-label">최근 7일</div><div class="proc-period-value">'+week.toLocaleString()+'</div></div>'
       +'<div class="proc-period"><div class="proc-period-label">이번 달</div><div class="proc-period-value">'+month.toLocaleString()+'</div></div>'
       +'</div></article>';
   }).join('');
