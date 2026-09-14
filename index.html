@@ -51,12 +51,27 @@ function setAdrTab(mode, el) {
   refreshAdrUI();
 }
 
-// 자동 연동 이후 기록은 CPP가 PDR 용종 건수의 원천이다.
-// 기존 수동 PDR 기록은 해당 날짜를 다시 저장하기 전까지 보존한다.
+// CPP만 자동 연결하면 biopsy-only polyp이 누락된다. ADR은 PDR의 하한이며,
+// 사용자가 확정한 수동 PDR 값은 이후 시술 카운터 저장에서도 보존한다.
 function getPdrCount(rec) {
-  if (!rec) return 0;
-  if (rec.pdrAuto === true) return +(rec.cpp || 0);
-  return rec.pdr != null ? +(rec.pdr || 0) : +(rec.cpp || 0);
+  return procedureStats.getPdrCount(rec);
+}
+
+function markPdrManual() {
+  var el = document.getElementById('adr-pdr');
+  if (el) el.dataset.mode = 'manual';
+}
+
+function resetPdrAuto() {
+  var date = document.getElementById('adr-date').value;
+  var rec = allDays.find(function(d){return d.key === date;}) || {};
+  var adrVal = +(document.getElementById('adr-adr').value) || 0;
+  var el = document.getElementById('adr-pdr');
+  if (el) {
+    el.dataset.mode = 'auto';
+    el.value = procedureStats.getSuggestedPdrCount({cpp:rec.cpp, adr:adrVal});
+  }
+  updateAdrPreview();
 }
 
 function updateAdrPreview() {
@@ -66,9 +81,11 @@ function updateAdrPreview() {
   if (!date) { if(preview) preview.textContent = '날짜를 선택하면 해당일 CFS 건수가 표시됩니다'; return; }
   var rec = allDays.find(function(d){return d.key === date;});
   var cfs = rec ? (rec.cfs||0) : 0;
-  var pdrVal = getPdrCount(rec);
   var pdrInput = document.getElementById('adr-pdr');
-  if (pdrInput) pdrInput.value = pdrVal;
+  if (pdrInput && pdrInput.dataset.mode !== 'manual') {
+    pdrInput.value = procedureStats.getSuggestedPdrCount({cpp:rec ? rec.cpp : 0, adr:adrVal});
+  }
+  var pdrVal = pdrInput ? (+pdrInput.value || 0) : getPdrCount(rec);
   var pdrPct = cfs > 0 ? (pdrVal/cfs*100).toFixed(1) : '-';
   var adrPct = cfs > 0 ? (adrVal/cfs*100).toFixed(1) : '-';
   var msg = date + ' 기록: CFS ' + cfs + '건';
@@ -90,19 +107,26 @@ async function saveAdrData() {
   var date = document.getElementById('adr-date').value;
   if (!date) { toast('날짜를 선택해주세요.'); return; }
   var adrVal = +(document.getElementById('adr-adr').value) || 0;
+  var pdrEl = document.getElementById('adr-pdr');
+  var pdrVal = +(pdrEl && pdrEl.value) || 0;
+  if (pdrVal < adrVal) {
+    toast('⚠️ PDR은 ADR보다 작을 수 없습니다. PDR 건수를 확인해주세요.');
+    return;
+  }
   try {
-    // PDR은 일별 CPP와 자동 연동되므로 ADR 병리 건수만 소급 저장
     await daysCol(currentUid).doc(date).set({
       key: date,
       month: date.slice(0,7),
+      pdr: pdrVal,
+      pdrAuto: !(pdrEl && pdrEl.dataset.mode === 'manual'),
       adr: adrVal,
     }, { merge: true });
     // 로컬 allDays 즉시 업데이트
     var rec = allDays.find(function(d){return d.key===date;});
-    if (rec) { rec.adr=adrVal; }
-    else { allDays.push({key:date, month:date.slice(0,7), adr:adrVal, egd:0, cfs:0, cpp:0}); }
+    if (rec) { rec.pdr=pdrVal; rec.pdrAuto=!(pdrEl && pdrEl.dataset.mode === 'manual'); rec.adr=adrVal; }
+    else { allDays.push({key:date, month:date.slice(0,7), pdr:pdrVal, pdrAuto:!(pdrEl && pdrEl.dataset.mode === 'manual'), adr:adrVal, egd:0, cfs:0, cpp:0}); }
     refreshAdrUI();
-    toast(date + ' ADR 건수 저장 완료');
+    toast(date + ' PDR·ADR 건수 저장 완료');
   } catch(e) { toast('저장 오류: ' + e.message); }
 }
 
@@ -114,12 +138,12 @@ function onAdrDateChange() {
   if (rec) {
     var pdrEl = document.getElementById('adr-pdr');
     var adrEl = document.getElementById('adr-adr');
-    if(pdrEl) pdrEl.value = getPdrCount(rec);
+    if(pdrEl) { pdrEl.value = getPdrCount(rec); pdrEl.dataset.mode = rec.pdrAuto === false ? 'manual' : 'auto'; }
     if(adrEl) adrEl.value = rec.adr != null ? rec.adr : 0;
   } else {
     var emptyPdrEl = document.getElementById('adr-pdr');
     var emptyAdrEl = document.getElementById('adr-adr');
-    if(emptyPdrEl) emptyPdrEl.value = 0;
+    if(emptyPdrEl) { emptyPdrEl.value = 0; emptyPdrEl.dataset.mode = 'auto'; }
     if(emptyAdrEl) emptyAdrEl.value = 0;
   }
   updateAdrPreview();
@@ -1448,16 +1472,17 @@ html,body{height:100%;font-family:'Noto Sans KR',sans-serif;background:var(--sb)
           <!-- ADR 입력 (날짜 선택 + 소급 입력) -->
           <div style="background:var(--surface2);border-radius:var(--rsm);padding:14px;margin-bottom:12px;">
             <div style="font-size:11px;font-weight:500;color:var(--text2);margin-bottom:10px;">📝 날짜별 ADR/PDR 건수 기록</div>
-            <div class="adr-definition-note">PDR 용종 건수는 해당 날짜의 <strong>CPP 건수와 자동 연동</strong>됩니다. ADR은 병리 결과 확정 후 선종/이형성증 <strong>건수</strong>를 입력하세요. 아래 %는 환자 비율이 아닌 병변 건수÷CFS 지표입니다.</div>
+            <div class="adr-definition-note">PDR은 <strong>CPP와 ADR을 기준으로 자동 제안</strong>되며, biopsy-only 용종 등은 직접 수정할 수 있습니다. ADR은 병리 결과 확정 후 선종/이형성증 <strong>건수</strong>를 입력하세요. 아래 %는 환자 비율이 아닌 병변 건수÷CFS 지표입니다.</div>
             <div class="adr-input-row">
               <div class="adr-inp-group">
                 <span class="adr-inp-lbl">날짜 선택</span>
                 <input class="dinp" type="date" id="adr-date" style="font-size:12px;padding:6px 10px;" onchange="onAdrDateChange()"/>
               </div>
               <div class="adr-inp-group">
-                <span class="adr-inp-lbl">PDR 용종 건수 <span style="font-size:9px;color:var(--cfs-dark);">(CPP 자동)</span></span>
+                <span class="adr-inp-lbl">PDR 용종 건수 <span style="font-size:9px;color:var(--cfs-dark);">(자동 제안·수정 가능)</span></span>
                 <div class="adr-stepper">
-                  <input class="adr-inp adr-auto-input" type="number" id="adr-pdr" value="0" min="0" readonly aria-label="CPP에서 자동 계산된 PDR 용종 건수"/>
+                  <input class="adr-inp" type="number" id="adr-pdr" value="0" min="0" data-mode="auto" oninput="markPdrManual();updateAdrPreview()" aria-label="PDR 용종 건수"/>
+                  <button type="button" class="adr-btn" onclick="resetPdrAuto()" title="CPP와 ADR을 기준으로 자동값 복원">↻</button>
                 </div>
               </div>
               <div class="adr-inp-group">
@@ -2654,14 +2679,15 @@ async function saveDay() {
     const isFullDay=pm_egd+pm_cfs+pm_bxe+pm_bxc+pm_cpp+pm_clo>0;
     const existDoc = await daysCol(currentUid).doc(date).get();
     const existData = existDoc.exists ? existDoc.data() : {};
+    const pdrState = procedureStats.buildPdrSaveState(existData, cpp, existData.adr);
     await daysCol(currentUid).doc(date).set({
       key:date, month:date.slice(0,7),
       egd, cfs, bxe, bxc, cpp, clo, pts,
       am_egd, am_cfs, am_bxe, am_bxc, am_cpp, am_clo,
       pm_egd, pm_cfs, pm_bxe, pm_bxc, pm_cpp, pm_clo,
       fullDay: isFullDay,
-      pdr: cpp,
-      pdrAuto: true,
+      pdr: pdrState.pdr,
+      pdrAuto: pdrState.pdrAuto,
       adr: existData.adr ?? null,
     });
     await loadAllDays();
@@ -2809,13 +2835,14 @@ async function saveEdit() {
     const sBxe=split(bxe,'pm_bxe'), sBxc=split(bxc,'pm_bxc');
     const sCpp=split(cpp,'pm_cpp'), sClo=split(clo,'pm_clo');
     const pmTotal=sEgd.pm+sCfs.pm+sBxe.pm+sBxc.pm+sCpp.pm+sClo.pm;
+    const pdrState=procedureStats.buildPdrSaveState(prev,cpp,prev.adr);
     await ref.set({
       key,month:key.slice(0,7),egd,cfs,bxe,bxc,cpp,clo,pts,
       am_egd:sEgd.am,am_cfs:sCfs.am,am_bxe:sBxe.am,am_bxc:sBxc.am,am_cpp:sCpp.am,am_clo:sClo.am,
       pm_egd:sEgd.pm,pm_cfs:sCfs.pm,pm_bxe:sBxe.pm,pm_bxc:sBxc.pm,pm_cpp:sCpp.pm,pm_clo:sClo.pm,
       fullDay: pmTotal > 0,
-      pdr: cpp,
-      pdrAuto: true
+      pdr:pdrState.pdr,
+      pdrAuto:pdrState.pdrAuto
     }, { merge:true });
     closeModal(); await loadAllDays();
     loadDayData(document.getElementById('inp-date').value);
