@@ -1387,13 +1387,26 @@ html,body{height:100%;font-family:'Noto Sans KR',sans-serif;background:var(--sb)
               <div class="inc-field-lbl">용종절제술 (CPP)<span class="inc-field-pt green">×1p</span></div>
               <div class="inc-stepper" id="stepper-vcpp_am" style="display:flex;">
                 <button class="inc-btn" onclick="adjInc('vcpp_am',-1)">−</button>
-                <input class="inc-val" type="number" id="vcpp_am" value="0" min="0" oninput="calcTodayPts()"/>
+                <input class="inc-val" type="number" id="vcpp_am" value="0" min="0" oninput="syncCounterPdr('am');calcTodayPts()"/>
                 <button class="inc-btn" onclick="adjInc('vcpp_am',1)">+</button>
               </div>
               <div class="inc-stepper" id="stepper-vcpp_pm" style="display:none;">
                 <button class="inc-btn" onclick="adjInc('vcpp_pm',-1)">−</button>
-                <input class="inc-val" type="number" id="vcpp_pm" value="0" min="0" oninput="calcTodayPts()"/>
+                <input class="inc-val" type="number" id="vcpp_pm" value="0" min="0" oninput="syncCounterPdr('pm');calcTodayPts()"/>
                 <button class="inc-btn" onclick="adjInc('vcpp_pm',1)">+</button>
+              </div>
+            </div>
+            <div class="inc-field">
+              <div class="inc-field-lbl">용종 발견 (PDR)<span class="inc-field-pt blue">통계·0p</span></div>
+              <div class="inc-stepper" id="stepper-vpdr_am" style="display:flex;">
+                <button class="inc-btn" onclick="adjInc('vpdr_am',-1)">−</button>
+                <input class="inc-val" type="number" id="vpdr_am" value="0" min="0"/>
+                <button class="inc-btn" onclick="adjInc('vpdr_am',1)">+</button>
+              </div>
+              <div class="inc-stepper" id="stepper-vpdr_pm" style="display:none;">
+                <button class="inc-btn" onclick="adjInc('vpdr_pm',-1)">−</button>
+                <input class="inc-val" type="number" id="vpdr_pm" value="0" min="0"/>
+                <button class="inc-btn" onclick="adjInc('vpdr_pm',1)">+</button>
               </div>
             </div>
             <div class="inc-field">
@@ -2007,6 +2020,7 @@ html,body{height:100%;font-family:'Noto Sans KR',sans-serif;background:var(--sb)
     <div class="mrow"><span class="mlbl">대장내시경</span><input class="minp" type="number" id="ecfs" min="0"/></div>
     <div class="mrow"><span class="mlbl">조직검사 (대장)</span><input class="minp" type="number" id="ebxc" min="0"/></div>
     <div class="mrow"><span class="mlbl">용종절제술 CPP</span><input class="minp" type="number" id="ecpp" min="0"/></div>
+    <div class="mrow"><span class="mlbl">용종 발견 PDR</span><input class="minp" type="number" id="epdr" min="0"/></div>
     <div class="mrow"><span class="mlbl">CLO</span><input class="minp" type="number" id="eclo" min="0"/></div>
     <div class="mbtns">
       <button class="mbtn mbsec" onclick="closeModal()">취소</button>
@@ -2582,7 +2596,18 @@ function escA(s) { return escH(s).replace(/"/g,'&quot;').replace(/'/g,'&#39;'); 
 // ══ PTS JS ══
 function adjInc(id, d) {
   const el = document.getElementById(id);
-  if(el) { el.value = Math.max(0, (+el.value||0)+d); calcTodayPts(); }
+  if(el) {
+    el.value = Math.max(0, (+el.value||0)+d);
+    if (id === 'vcpp_am') syncCounterPdr('am');
+    if (id === 'vcpp_pm') syncCounterPdr('pm');
+    calcTodayPts();
+  }
+}
+
+function syncCounterPdr(session) {
+  var cppEl=document.getElementById('vcpp_'+session);
+  var pdrEl=document.getElementById('vpdr_'+session);
+  if(cppEl&&pdrEl) pdrEl.value=Math.max(+pdrEl.value||0,+cppEl.value||0);
 }
 var currentSession = 'am';
 function switchSession(s) {
@@ -2590,7 +2615,7 @@ function switchSession(s) {
   var isAm = s === 'am';
   document.getElementById('tab-am').className = 'session-tab am' + (isAm?' on':'');
   document.getElementById('tab-pm').className = 'session-tab pm' + (!isAm?' on':'');
-  var fields = ['ve','vc','vbe','vbc','vcpp','vclo'];
+  var fields = ['ve','vc','vbe','vbc','vcpp','vpdr','vclo'];
   fields.forEach(function(f) {
     var am = document.getElementById('stepper-'+f+'_am');
     var pm = document.getElementById('stepper-'+f+'_pm');
@@ -2644,20 +2669,22 @@ async function loadDayData(date) {
     g('vbe_am', hasAmPm ? rec.am_bxe||0 : rec.bxe||0);
     g('vbc_am', hasAmPm ? rec.am_bxc||0 : rec.bxc||0);
     g('vcpp_am',hasAmPm ? rec.am_cpp||0 : rec.cpp||0);
+    g('vpdr_am',rec.am_pdr != null ? rec.am_pdr : getPdrCount(rec));
     g('vclo_am',hasAmPm ? rec.am_clo||0 : rec.clo||0);
     g('ve_pm',  rec.pm_egd||0);
     g('vc_pm',  rec.pm_cfs||0);
     g('vbe_pm', rec.pm_bxe||0);
     g('vbc_pm', rec.pm_bxc||0);
     g('vcpp_pm',rec.pm_cpp||0);
+    g('vpdr_pm',rec.pm_pdr||0);
     g('vclo_pm',rec.pm_clo||0);
     const pts=rec.pts||0;
     note.style.display='block';
     var fTag = rec.fullDay ? ' 🌟 풀근무' : ' ☀️ 오전';
-    note.innerHTML='저장된 기록 — EGD <strong>'+(rec.egd||0)+'</strong> · CFS <strong>'+(rec.cfs||0)+'</strong> · Bx-E '+(rec.bxe||0)+' · Bx-C '+(rec.bxc||0)+' · CPP '+(rec.cpp||0)+' · CLO '+(rec.clo||0)+'&nbsp;|&nbsp;<strong>'+pts+'p</strong>'+fTag;
+    note.innerHTML='저장된 기록 — EGD <strong>'+(rec.egd||0)+'</strong> · CFS <strong>'+(rec.cfs||0)+'</strong> · Bx-E '+(rec.bxe||0)+' · Bx-C '+(rec.bxc||0)+' · CPP '+(rec.cpp||0)+' · PDR '+getPdrCount(rec)+' · CLO '+(rec.clo||0)+'&nbsp;|&nbsp;<strong>'+pts+'p</strong>'+fTag;
   } else {
-    ['ve_am','vc_am','vbe_am','vbc_am','vcpp_am','vclo_am',
-     've_pm','vc_pm','vbe_pm','vbc_pm','vcpp_pm','vclo_pm'].forEach(function(id){g(id,0);});
+    ['ve_am','vc_am','vbe_am','vbc_am','vcpp_am','vpdr_am','vclo_am',
+     've_pm','vc_pm','vbe_pm','vbc_pm','vcpp_pm','vpdr_pm','vclo_pm'].forEach(function(id){g(id,0);});
     note.style.display='none';
   }
   calcTodayPts();
@@ -2672,6 +2699,7 @@ async function saveDay() {
     var g = function(id){ var e=document.getElementById(id); return e?+e.value||0:0; };
     const am_egd=g('ve_am'),am_cfs=g('vc_am'),am_bxe=g('vbe_am'),am_bxc=g('vbc_am'),am_cpp=g('vcpp_am'),am_clo=g('vclo_am');
     const pm_egd=g('ve_pm'),pm_cfs=g('vc_pm'),pm_bxe=g('vbe_pm'),pm_bxc=g('vbc_pm'),pm_cpp=g('vcpp_pm'),pm_clo=g('vclo_pm');
+    const am_pdr=g('vpdr_am'),pm_pdr=g('vpdr_pm'),pdr=am_pdr+pm_pdr;
     // 합산 (기존 필드 호환성 유지)
     const egd=am_egd+pm_egd, cfs=am_cfs+pm_cfs, bxe=am_bxe+pm_bxe;
     const bxc=am_bxc+pm_bxc, cpp=am_cpp+pm_cpp, clo=am_clo+pm_clo;
@@ -2679,15 +2707,20 @@ async function saveDay() {
     const isFullDay=pm_egd+pm_cfs+pm_bxe+pm_bxc+pm_cpp+pm_clo>0;
     const existDoc = await daysCol(currentUid).doc(date).get();
     const existData = existDoc.exists ? existDoc.data() : {};
-    const pdrState = procedureStats.buildPdrSaveState(existData, cpp, existData.adr);
+    const adr=+(existData.adr||0);
+    if (pdr < cpp || pdr < adr) {
+      toast('⚠️ PDR은 CPP 및 ADR보다 작을 수 없습니다. 용종 발견 건수를 확인해주세요.');
+      return;
+    }
     await daysCol(currentUid).doc(date).set({
       key:date, month:date.slice(0,7),
       egd, cfs, bxe, bxc, cpp, clo, pts,
       am_egd, am_cfs, am_bxe, am_bxc, am_cpp, am_clo,
-      pm_egd, pm_cfs, pm_bxe, pm_bxc, pm_cpp, pm_clo,
+      pm_egd, pm_cfs, pm_bxe, pm_bxc, pm_cpp, pm_pdr, pm_clo,
+      am_pdr,
       fullDay: isFullDay,
-      pdr: pdrState.pdr,
-      pdrAuto: pdrState.pdrAuto,
+      pdr,
+      pdrAuto: false,
       adr: existData.adr ?? null,
     });
     await loadAllDays();
@@ -2807,6 +2840,7 @@ async function openEditModal(key) {
   document.getElementById('ecfs').value=d.cfs||0;
   document.getElementById('ebxc').value=d.bxc||0;
   document.getElementById('ecpp').value=d.cpp||0;
+  document.getElementById('epdr').value=getPdrCount(d);
   document.getElementById('eclo').value=d.clo||0;
   document.getElementById('editModal').classList.add('open');
 }
@@ -2820,12 +2854,17 @@ async function saveEdit() {
   const bxe=+document.getElementById('ebxe').value||0;
   const bxc=+document.getElementById('ebxc').value||0;
   const cpp=+document.getElementById('ecpp')?.value||0;
+  const pdr=+document.getElementById('epdr')?.value||0;
   const clo=+document.getElementById('eclo')?.value||0;
   const pts=Math.round((egd*1+cfs*2+bxe*0.5+bxc*0.5+cpp*1+clo*0.5)*10)/10;
   try {
     const ref = daysCol(currentUid).doc(key);
     const snap = await ref.get();
     const prev = snap.exists ? snap.data() : {};
+    if (pdr < cpp || pdr < +(prev.adr||0)) {
+      toast('⚠️ PDR은 CPP 및 ADR보다 작을 수 없습니다.');
+      return;
+    }
     const split = function(total, pmKey) {
       const prevPm = Math.max(0, +prev[pmKey] || 0);
       const pm = Math.min(total, prevPm);
@@ -2833,16 +2872,15 @@ async function saveEdit() {
     };
     const sEgd=split(egd,'pm_egd'), sCfs=split(cfs,'pm_cfs');
     const sBxe=split(bxe,'pm_bxe'), sBxc=split(bxc,'pm_bxc');
-    const sCpp=split(cpp,'pm_cpp'), sClo=split(clo,'pm_clo');
+    const sCpp=split(cpp,'pm_cpp'), sPdr=split(pdr,'pm_pdr'), sClo=split(clo,'pm_clo');
     const pmTotal=sEgd.pm+sCfs.pm+sBxe.pm+sBxc.pm+sCpp.pm+sClo.pm;
-    const pdrState=procedureStats.buildPdrSaveState(prev,cpp,prev.adr);
     await ref.set({
       key,month:key.slice(0,7),egd,cfs,bxe,bxc,cpp,clo,pts,
-      am_egd:sEgd.am,am_cfs:sCfs.am,am_bxe:sBxe.am,am_bxc:sBxc.am,am_cpp:sCpp.am,am_clo:sClo.am,
-      pm_egd:sEgd.pm,pm_cfs:sCfs.pm,pm_bxe:sBxe.pm,pm_bxc:sBxc.pm,pm_cpp:sCpp.pm,pm_clo:sClo.pm,
+      am_egd:sEgd.am,am_cfs:sCfs.am,am_bxe:sBxe.am,am_bxc:sBxc.am,am_cpp:sCpp.am,am_pdr:sPdr.am,am_clo:sClo.am,
+      pm_egd:sEgd.pm,pm_cfs:sCfs.pm,pm_bxe:sBxe.pm,pm_bxc:sBxc.pm,pm_cpp:sCpp.pm,pm_pdr:sPdr.pm,pm_clo:sClo.pm,
       fullDay: pmTotal > 0,
-      pdr:pdrState.pdr,
-      pdrAuto:pdrState.pdrAuto
+      pdr,
+      pdrAuto:false
     }, { merge:true });
     closeModal(); await loadAllDays();
     loadDayData(document.getElementById('inp-date').value);
@@ -2860,8 +2898,8 @@ async function delDay(key) {
 
 function exportCSV() {
   if(!allDays.length){toast('내보낼 기록이 없습니다.');return;}
-  const rows=[['날짜','EGD','Bx-E','CFS','Bx-C','CPP','CLO','점수','소계']];
-  [...allDays].sort((a,b)=>a.key.localeCompare(b.key)).forEach(d=>rows.push([d.key,d.egd||0,d.bxe||0,d.cfs||0,d.bxc||0,d.cpp||0,d.clo||0,d.pts||0,(d.egd||0)+(d.cfs||0)]));
+  const rows=[['날짜','EGD','Bx-E','CFS','Bx-C','CPP','PDR','ADR','CLO','점수','소계']];
+  [...allDays].sort((a,b)=>a.key.localeCompare(b.key)).forEach(d=>rows.push([d.key,d.egd||0,d.bxe||0,d.cfs||0,d.bxc||0,d.cpp||0,getPdrCount(d),d.adr??'',d.clo||0,d.pts||0,(d.egd||0)+(d.cfs||0)]));
   const csv='\uFEFF'+rows.map(r=>r.join(',')).join('\n');
   const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8;'}));a.download=`EndoCount_${TODAY}.csv`;a.click();
   toast('CSV 다운로드 완료');
