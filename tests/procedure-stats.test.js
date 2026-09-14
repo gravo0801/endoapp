@@ -2,7 +2,10 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const {
   getRollingDateRange,
-  buildProcedurePeriods
+  buildProcedurePeriods,
+  getSuggestedPdrCount,
+  getPdrCount,
+  buildPdrSaveState
 } = require('../procedure-stats.js');
 
 test('weekly range includes today and the preceding six dates', () => {
@@ -43,4 +46,28 @@ test('procedure periods separate today, recent seven days, and current month', (
     '2026-08-31',
     'not-a-date'
   ]);
+});
+
+test('automatic PDR uses ADR as a lower bound when CPP is zero', () => {
+  const record = { cpp: 0, adr: 4, pdr: 0, pdrAuto: true };
+  assert.equal(getSuggestedPdrCount(record), 4);
+  assert.equal(getPdrCount(record), 4);
+});
+
+test('automatic PDR keeps a larger CPP count', () => {
+  assert.equal(getPdrCount({ cpp: 5, adr: 3, pdr: 5, pdrAuto: true }), 5);
+});
+
+test('manual PDR survives later counter saves', () => {
+  assert.deepEqual(
+    buildPdrSaveState({ pdr: 6, pdrAuto: false, adr: 4 }, 2, 4),
+    { pdr: 6, pdrAuto: false }
+  );
+});
+
+test('manual PDR is raised when later ADR proves a higher minimum', () => {
+  assert.deepEqual(
+    buildPdrSaveState({ pdr: 2, pdrAuto: false }, 0, 4),
+    { pdr: 4, pdrAuto: false }
+  );
 });
