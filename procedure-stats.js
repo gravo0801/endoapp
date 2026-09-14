@@ -58,10 +58,48 @@
     };
   }
 
+  function normalizeCount(value) {
+    var count = Number(value);
+    return Number.isFinite(count) && count > 0 ? count : 0;
+  }
+
+  // CPP만으로는 biopsy-only polyp을 놓칠 수 있다. 병리에서 확인된
+  // adenoma 수(ADR)는 검출된 polyp 수(PDR)의 하한으로 사용한다.
+  function getSuggestedPdrCount(rec) {
+    if (!rec) return 0;
+    return Math.max(normalizeCount(rec.cpp), normalizeCount(rec.adr));
+  }
+
+  function getPdrCount(rec) {
+    if (!rec) return 0;
+    var saved = rec.pdr == null ? null : normalizeCount(rec.pdr);
+    var suggested = getSuggestedPdrCount(rec);
+    if (rec.pdrAuto !== true && saved !== null) {
+      return Math.max(saved, normalizeCount(rec.adr));
+    }
+    return Math.max(saved == null ? 0 : saved, suggested);
+  }
+
+  function buildPdrSaveState(previous, cpp, adr) {
+    var prev = previous || {};
+    var cppCount = normalizeCount(cpp);
+    var adrCount = normalizeCount(adr);
+    if (prev.pdrAuto === false && prev.pdr != null) {
+      return {
+        pdr: Math.max(normalizeCount(prev.pdr), cppCount, adrCount),
+        pdrAuto: false
+      };
+    }
+    return { pdr: Math.max(cppCount, adrCount), pdrAuto: true };
+  }
+
   return {
     shiftDateKey: shiftDateKey,
     getRollingDateRange: getRollingDateRange,
     isDateKeyInRange: isDateKeyInRange,
-    buildProcedurePeriods: buildProcedurePeriods
+    buildProcedurePeriods: buildProcedurePeriods,
+    getSuggestedPdrCount: getSuggestedPdrCount,
+    getPdrCount: getPdrCount,
+    buildPdrSaveState: buildPdrSaveState
   };
 }));
