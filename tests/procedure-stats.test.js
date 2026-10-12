@@ -48,26 +48,38 @@ test('procedure periods separate today, recent seven days, and current month', (
   ]);
 });
 
-test('automatic PDR uses ADR as a lower bound when CPP is zero', () => {
-  const record = { cpp: 0, adr: 4, pdr: 0, pdrAuto: true };
+test('automatic PDR uses ADR as a lower bound when CPP and Bx-C are zero', () => {
+  const record = { cpp: 0, bxc: 0, adr: 4, pdr: 0, pdrAuto: true };
   assert.equal(getSuggestedPdrCount(record), 4);
   assert.equal(getPdrCount(record), 4);
 });
 
 test('automatic PDR keeps a larger CPP count', () => {
-  assert.equal(getPdrCount({ cpp: 5, adr: 3, pdr: 5, pdrAuto: true }), 5);
+  assert.equal(getPdrCount({ cpp: 5, bxc: 0, adr: 3, pdr: 5, pdrAuto: true }), 5);
+});
+
+test('automatic PDR counts both CPP and colon biopsy', () => {
+  assert.equal(getSuggestedPdrCount({ cpp: 3, bxc: 2, adr: 0 }), 5);
+  assert.equal(getPdrCount({ cpp: 3, bxc: 2, adr: 0, pdr: 3, pdrAuto: true }), 5);
 });
 
 test('manual PDR survives later counter saves', () => {
   assert.deepEqual(
-    buildPdrSaveState({ pdr: 6, pdrAuto: false, adr: 4 }, 2, 4),
+    buildPdrSaveState({ pdr: 6, pdrAuto: false, adr: 4 }, 2, 1, 4),
     { pdr: 6, pdrAuto: false }
   );
 });
 
 test('manual PDR is raised when later ADR proves a higher minimum', () => {
   assert.deepEqual(
-    buildPdrSaveState({ pdr: 2, pdrAuto: false }, 0, 4),
+    buildPdrSaveState({ pdr: 2, pdrAuto: false }, 0, 0, 4),
     { pdr: 4, pdrAuto: false }
+  );
+});
+
+test('saved manual PDR is raised to CPP plus Bx-C minimum', () => {
+  assert.deepEqual(
+    buildPdrSaveState({ pdr: 2, pdrAuto: false }, 2, 3, 0),
+    { pdr: 5, pdrAuto: false }
   );
 });
