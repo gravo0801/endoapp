@@ -63,11 +63,12 @@
     return Number.isFinite(count) && count > 0 ? count : 0;
   }
 
-  // CPP만으로는 biopsy-only polyp을 놓칠 수 있다. 병리에서 확인된
-  // adenoma 수(ADR)는 검출된 polyp 수(PDR)의 하한으로 사용한다.
+  // 이 앱에서는 CPP와 대장 Bx-C를 모두 용종 처치 건수로 센다.
+  // 병리에서 확인된 adenoma 수(ADR)도 PDR의 하한으로 사용한다.
   function getSuggestedPdrCount(rec) {
     if (!rec) return 0;
-    return Math.max(normalizeCount(rec.cpp), normalizeCount(rec.adr));
+    var treatedPolyps = normalizeCount(rec.cpp) + normalizeCount(rec.bxc);
+    return Math.max(treatedPolyps, normalizeCount(rec.adr));
   }
 
   function getPdrCount(rec) {
@@ -75,22 +76,24 @@
     var saved = rec.pdr == null ? null : normalizeCount(rec.pdr);
     var suggested = getSuggestedPdrCount(rec);
     if (rec.pdrAuto !== true && saved !== null) {
-      return Math.max(saved, normalizeCount(rec.adr));
+      return Math.max(saved, suggested);
     }
     return Math.max(saved == null ? 0 : saved, suggested);
   }
 
-  function buildPdrSaveState(previous, cpp, adr) {
+  function buildPdrSaveState(previous, cpp, bxc, adr) {
     var prev = previous || {};
     var cppCount = normalizeCount(cpp);
+    var bxcCount = normalizeCount(bxc);
     var adrCount = normalizeCount(adr);
+    var minimum = Math.max(cppCount + bxcCount, adrCount);
     if (prev.pdrAuto === false && prev.pdr != null) {
       return {
-        pdr: Math.max(normalizeCount(prev.pdr), cppCount, adrCount),
+        pdr: Math.max(normalizeCount(prev.pdr), minimum),
         pdrAuto: false
       };
     }
-    return { pdr: Math.max(cppCount, adrCount), pdrAuto: true };
+    return { pdr: minimum, pdrAuto: true };
   }
 
   return {
