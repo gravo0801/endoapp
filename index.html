@@ -51,7 +51,7 @@ function setAdrTab(mode, el) {
   refreshAdrUI();
 }
 
-// CPP만 자동 연결하면 biopsy-only polyp이 누락된다. ADR은 PDR의 하한이며,
+// CPP와 Bx-C를 모두 용종 처치 건수로 합산한다. ADR은 PDR의 하한이며,
 // 사용자가 확정한 수동 PDR 값은 이후 시술 카운터 저장에서도 보존한다.
 function getPdrCount(rec) {
   return procedureStats.getPdrCount(rec);
@@ -69,7 +69,7 @@ function resetPdrAuto() {
   var el = document.getElementById('adr-pdr');
   if (el) {
     el.dataset.mode = 'auto';
-    el.value = procedureStats.getSuggestedPdrCount({cpp:rec.cpp, adr:adrVal});
+    el.value = procedureStats.getSuggestedPdrCount({cpp:rec.cpp, bxc:rec.bxc, adr:adrVal});
   }
   updateAdrPreview();
 }
@@ -83,7 +83,7 @@ function updateAdrPreview() {
   var cfs = rec ? (rec.cfs||0) : 0;
   var pdrInput = document.getElementById('adr-pdr');
   if (pdrInput && pdrInput.dataset.mode !== 'manual') {
-    pdrInput.value = procedureStats.getSuggestedPdrCount({cpp:rec ? rec.cpp : 0, adr:adrVal});
+    pdrInput.value = procedureStats.getSuggestedPdrCount({cpp:rec ? rec.cpp : 0, bxc:rec ? rec.bxc : 0, adr:adrVal});
   }
   var pdrVal = pdrInput ? (+pdrInput.value || 0) : getPdrCount(rec);
   var pdrPct = cfs > 0 ? (pdrVal/cfs*100).toFixed(1) : '-';
@@ -1374,12 +1374,12 @@ html,body{height:100%;font-family:'Noto Sans KR',sans-serif;background:var(--sb)
               <div class="inc-field-lbl">대장 조직검사 (Bx-C)<span class="inc-field-pt amber">×0.5p</span></div>
               <div class="inc-stepper" id="stepper-vbc_am" style="display:flex;">
                 <button class="inc-btn" onclick="adjInc('vbc_am',-1)">−</button>
-                <input class="inc-val" type="number" id="vbc_am" value="0" min="0" oninput="calcTodayPts()"/>
+                <input class="inc-val" type="number" id="vbc_am" value="0" min="0" oninput="syncCounterPdr('am');calcTodayPts()"/>
                 <button class="inc-btn" onclick="adjInc('vbc_am',1)">+</button>
               </div>
               <div class="inc-stepper" id="stepper-vbc_pm" style="display:none;">
                 <button class="inc-btn" onclick="adjInc('vbc_pm',-1)">−</button>
-                <input class="inc-val" type="number" id="vbc_pm" value="0" min="0" oninput="calcTodayPts()"/>
+                <input class="inc-val" type="number" id="vbc_pm" value="0" min="0" oninput="syncCounterPdr('pm');calcTodayPts()"/>
                 <button class="inc-btn" onclick="adjInc('vbc_pm',1)">+</button>
               </div>
             </div>
@@ -1397,7 +1397,7 @@ html,body{height:100%;font-family:'Noto Sans KR',sans-serif;background:var(--sb)
               </div>
             </div>
             <div class="inc-field">
-              <div class="inc-field-lbl">용종 발견 (PDR)<span class="inc-field-pt blue">통계·0p</span></div>
+              <div class="inc-field-lbl">용종 처치 합계 (PDR)<span class="inc-field-pt blue">CPP+Bx-C·0p</span></div>
               <div class="inc-stepper" id="stepper-vpdr_am" style="display:flex;">
                 <button class="inc-btn" onclick="adjInc('vpdr_am',-1)">−</button>
                 <input class="inc-val" type="number" id="vpdr_am" value="0" min="0"/>
@@ -1485,7 +1485,7 @@ html,body{height:100%;font-family:'Noto Sans KR',sans-serif;background:var(--sb)
           <!-- ADR 입력 (날짜 선택 + 소급 입력) -->
           <div style="background:var(--surface2);border-radius:var(--rsm);padding:14px;margin-bottom:12px;">
             <div style="font-size:11px;font-weight:500;color:var(--text2);margin-bottom:10px;">📝 날짜별 ADR/PDR 건수 기록</div>
-            <div class="adr-definition-note">PDR은 <strong>CPP와 ADR을 기준으로 자동 제안</strong>되며, biopsy-only 용종 등은 직접 수정할 수 있습니다. ADR은 병리 결과 확정 후 선종/이형성증 <strong>건수</strong>를 입력하세요. 아래 %는 환자 비율이 아닌 병변 건수÷CFS 지표입니다.</div>
+            <div class="adr-definition-note">PDR은 <strong>CPP + 대장 Bx-C</strong>를 자동 합산하며, ADR은 PDR의 최소값으로 반영됩니다. 필요한 경우 PDR을 직접 수정할 수 있습니다. 아래 %는 환자 비율이 아닌 병변 건수÷CFS 지표입니다.</div>
             <div class="adr-input-row">
               <div class="adr-inp-group">
                 <span class="adr-inp-lbl">날짜 선택</span>
@@ -1495,7 +1495,7 @@ html,body{height:100%;font-family:'Noto Sans KR',sans-serif;background:var(--sb)
                 <span class="adr-inp-lbl">PDR 용종 건수 <span style="font-size:9px;color:var(--cfs-dark);">(자동 제안·수정 가능)</span></span>
                 <div class="adr-stepper">
                   <input class="adr-inp" type="number" id="adr-pdr" value="0" min="0" data-mode="auto" oninput="markPdrManual();updateAdrPreview()" aria-label="PDR 용종 건수"/>
-                  <button type="button" class="adr-btn" onclick="resetPdrAuto()" title="CPP와 ADR을 기준으로 자동값 복원">↻</button>
+                  <button type="button" class="adr-btn" onclick="resetPdrAuto()" title="CPP + Bx-C와 ADR을 기준으로 자동값 복원">↻</button>
                 </div>
               </div>
               <div class="adr-inp-group">
@@ -2598,16 +2598,17 @@ function adjInc(id, d) {
   const el = document.getElementById(id);
   if(el) {
     el.value = Math.max(0, (+el.value||0)+d);
-    if (id === 'vcpp_am') syncCounterPdr('am');
-    if (id === 'vcpp_pm') syncCounterPdr('pm');
+    if (id === 'vcpp_am' || id === 'vbc_am') syncCounterPdr('am');
+    if (id === 'vcpp_pm' || id === 'vbc_pm') syncCounterPdr('pm');
     calcTodayPts();
   }
 }
 
 function syncCounterPdr(session) {
   var cppEl=document.getElementById('vcpp_'+session);
+  var bxcEl=document.getElementById('vbc_'+session);
   var pdrEl=document.getElementById('vpdr_'+session);
-  if(cppEl&&pdrEl) pdrEl.value=Math.max(+pdrEl.value||0,+cppEl.value||0);
+  if(cppEl&&bxcEl&&pdrEl) pdrEl.value=Math.max(+pdrEl.value||0,(+cppEl.value||0)+(+bxcEl.value||0));
 }
 var currentSession = 'am';
 function switchSession(s) {
@@ -2669,14 +2670,19 @@ async function loadDayData(date) {
     g('vbe_am', hasAmPm ? rec.am_bxe||0 : rec.bxe||0);
     g('vbc_am', hasAmPm ? rec.am_bxc||0 : rec.bxc||0);
     g('vcpp_am',hasAmPm ? rec.am_cpp||0 : rec.cpp||0);
-    g('vpdr_am',rec.am_pdr != null ? rec.am_pdr : getPdrCount(rec));
+    var storedAmPdr = rec.am_pdr != null ? +rec.am_pdr||0 : getPdrCount(rec);
+    var storedPmPdr = +rec.pm_pdr||0;
+    var requiredPdr = getPdrCount(rec);
+    var splitPdrTotal = storedAmPdr + storedPmPdr;
+    if (splitPdrTotal < requiredPdr) storedAmPdr += requiredPdr - splitPdrTotal;
+    g('vpdr_am',Math.max(storedAmPdr,(hasAmPm ? rec.am_cpp||0 : rec.cpp||0)+(hasAmPm ? rec.am_bxc||0 : rec.bxc||0)));
     g('vclo_am',hasAmPm ? rec.am_clo||0 : rec.clo||0);
     g('ve_pm',  rec.pm_egd||0);
     g('vc_pm',  rec.pm_cfs||0);
     g('vbe_pm', rec.pm_bxe||0);
     g('vbc_pm', rec.pm_bxc||0);
     g('vcpp_pm',rec.pm_cpp||0);
-    g('vpdr_pm',rec.pm_pdr||0);
+    g('vpdr_pm',Math.max(storedPmPdr,(rec.pm_cpp||0)+(rec.pm_bxc||0)));
     g('vclo_pm',rec.pm_clo||0);
     const pts=rec.pts||0;
     note.style.display='block';
@@ -2708,8 +2714,9 @@ async function saveDay() {
     const existDoc = await daysCol(currentUid).doc(date).get();
     const existData = existDoc.exists ? existDoc.data() : {};
     const adr=+(existData.adr||0);
-    if (pdr < cpp || pdr < adr) {
-      toast('⚠️ PDR은 CPP 및 ADR보다 작을 수 없습니다. 용종 발견 건수를 확인해주세요.');
+    const treatedPolyps=cpp+bxc;
+    if (pdr < treatedPolyps || pdr < adr) {
+      toast('⚠️ PDR은 CPP + Bx-C 및 ADR보다 작을 수 없습니다. 용종 처치 건수를 확인해주세요.');
       return;
     }
     await daysCol(currentUid).doc(date).set({
@@ -2861,8 +2868,8 @@ async function saveEdit() {
     const ref = daysCol(currentUid).doc(key);
     const snap = await ref.get();
     const prev = snap.exists ? snap.data() : {};
-    if (pdr < cpp || pdr < +(prev.adr||0)) {
-      toast('⚠️ PDR은 CPP 및 ADR보다 작을 수 없습니다.');
+    if (pdr < cpp+bxc || pdr < +(prev.adr||0)) {
+      toast('⚠️ PDR은 CPP + Bx-C 및 ADR보다 작을 수 없습니다.');
       return;
     }
     const split = function(total, pmKey) {
