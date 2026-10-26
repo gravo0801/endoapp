@@ -1,0 +1,15 @@
+const test=require('node:test'), assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
+const html=fs.readFileSync(__dirname+'/../index.html','utf8');
+const scripts=[...html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)].map(m=>m[1]);
+const source=scripts.find(s=>s.includes('const endoCalendar ='));
+const ctx=vm.createContext({document:{addEventListener(){}}});vm.runInContext(source+'\nthis.api=endoCalendar;',ctx);const a=ctx.api;
+test('inline scripts parse',()=>scripts.forEach(s=>new vm.Script(s)));
+test('legacy records and distinct colors',()=>{assert.equal(a.failures({cfs:3}),0);assert.equal(new Set(a.metrics.map(m=>m[3])).size,7)});
+test('existing case detail never double counts',()=>{const d=a.mutate({failureCount:2},{type:'save',existing:true,record:{id:'1'}});assert.equal(d.failureCount,2);assert.equal(d.failureCases.length,1);assert.throws(()=>a.mutate({failureCount:0},{type:'save',existing:true,record:{id:'1'}}));});
+test('new case, retry and edit counts',()=>{let d=a.mutate({}, {type:'save',record:{id:'1',propofol:0}});d=a.mutate(d,{type:'save',record:{id:'1'}});assert.equal(d.failureCount,1);d=a.mutate(d,{type:'save',edit:true,record:{id:'1',propofol:80}});assert.equal(d.failureCount,1);assert.equal(d.failureCases[0].propofol,80);assert.throws(()=>a.mutate(d,{type:'save',edit:true,record:{id:'missing'}}));});
+test('delete decrements once and preserves count-only cases',()=>{let d={failureCount:4,failureCases:[{id:'1'},{id:'2'}]};d=a.mutate(d,{type:'delete',id:'1'});assert.equal(d.failureCount,3);assert.equal(d.failureCases.length,1);d=a.mutate(d,{type:'delete',id:'1'});assert.equal(d.failureCount,3);});
+test('count validation',()=>{for(const count of [-1,0,1.5,NaN])assert.throws(()=>a.mutate({failureCases:[{id:'1'}]},{type:'count',count}));assert.equal(a.mutate({}, {type:'count',count:0}).failureCount,0);});
+test('aggregation includes failure-only days',()=>{const s=a.sum([{egd:10,cfs:4,cpp:2,clo:3},{failureCount:2},{cfs:3,failureCases:[{id:'1'}]}]);assert.equal(s.egd,10);assert.equal(s.cfs,7);assert.equal(s.failureCount,3);assert.equal(s.cpp,2);});
+test('CSV escaping and formula safety',()=>{const csv=a.csv([['기록','a,b','"yes"','line1\nline2','=HYPERLINK("x")',0,null]]);assert(csv.startsWith('\uFEFF'));assert(csv.includes('"a,b"'));assert(csv.includes('""yes""'));assert(csv.includes('"line1\nline2"'));assert(csv.includes("'=HYPERLINK"));assert(csv.endsWith('"0",""'));});
+test('HTML escaping and unknown values',()=>{const out=vm.runInContext(`ecCaseHTML({id:'x" onclick="bad',history:'<img src=x onerror=bad>',age:null,propofol:0},'2026-10-27',true)`,ctx);assert(!out.includes('<img'));assert(out.includes('&lt;img'));assert(out.includes('0 mg'));assert(out.includes('나이 미상'));});
+test('counter save merges and backup includes registry',()=>{assert.match(html,/adr: existData\.adr \?\? null,\s*\}, \{ merge:true \}\)/);assert.match(html,/days:await readBackupCollection\(currentUid,'days'\)/);});

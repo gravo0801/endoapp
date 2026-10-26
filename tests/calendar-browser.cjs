@@ -1,0 +1,52 @@
+const {chromium}=require(process.env.CODEX_PRIMARY_RUNTIME_NODE_MODULES ? process.env.CODEX_PRIMARY_RUNTIME_NODE_MODULES+'/playwright' : 'playwright');
+const fs=require('fs'),assert=require('assert');
+(async()=>{
+ const browser=await chromium.launch({headless:true,executablePath:process.env.ENDO_TEST_CHROMIUM||undefined,args:['--no-sandbox','--disable-dev-shm-usage']});
+ const page=await browser.newPage({viewport:{width:1440,height:1000}});
+ let errors=[];page.on('pageerror',e=>errors.push(e.message));
+ const stub=`window.testRecords={};window.failWrite=false;
+ const ref=(path)=>({path,collection:n=>ref(path+'/'+n),doc:n=>ref(path+'/'+n),orderBy(){return this},limit(){return this},async get(){if(path.endsWith('/days'))return {docs:Object.entries(testRecords).map(([id,data])=>({id,data:()=>data}))};if(path.includes('/days/')){let data=testRecords[path.split('/').pop()];return {exists:!!data,data:()=>data}};return {exists:false,docs:[],data:()=>({})}},async set(v,opts){if(path.includes('/days/')){let id=path.split('/').pop();testRecords[id]=opts?.merge?{...testRecords[id],...v}:v}},async delete(){delete testRecords[path.split('/').pop()]}});
+ window.fakeDB={collection:n=>ref(n),async runTransaction(fn){if(failWrite)throw Error('test permission-denied');return fn({get:r=>r.get(),set:(r,v,o)=>r.set(v,o)})}};
+ window.firebase={initializeApp(){},firestore:()=>fakeDB};firebase.firestore.FieldValue={serverTimestamp:()=>0};`;
+ await page.route('**/*',async route=>{let u=route.request().url();if(u==='https://endo.test/')return route.fulfill({contentType:'text/html',body:fs.readFileSync(__dirname+'/../index.html','utf8')});if(u.includes('procedure-stats.js'))return route.fulfill({contentType:'text/javascript',body:fs.readFileSync(__dirname+'/../procedure-stats.js','utf8')});if(u.includes('firebase-app-compat'))return route.fulfill({contentType:'text/javascript',body:stub});if(u.includes('firebase-firestore-compat'))return route.fulfill({contentType:'text/javascript',body:''});return route.abort();});
+ await page.addInitScript(()=>sessionStorage.setItem('endo-auth','1'));
+ await page.goto('https://endo.test/');await page.waitForTimeout(300);
+ await page.evaluate(()=>{testRecords['2026-10-27']={key:'2026-10-27',month:'2026-10',egd:15,cfs:8,cpp:2,bxe:3,bxc:1,clo:4,adr:1};});
+ await page.evaluate(async()=>{await loadAllDays();ecChangeMonth('2026-10');});
+ assert.equal(await page.locator('.ec-day').count(),31);
+ await page.locator('.ec-day[data-date="2026-10-27"]').click();
+ await page.locator('#ec-failure-total').fill('2');await page.locator('#ec-count-form button').click();await page.waitForTimeout(100);
+ assert.equal(await page.evaluate(()=>testRecords['2026-10-27'].failureCount),2);
+ await page.locator('[name=sex]').selectOption('여');await page.locator('[name=age]').fill('65');await page.locator('[name=history]').fill('2023 정상, "완료"\n다음 줄');await page.locator('[name=extent]').selectOption('횡행결장');await page.locator('[name=prep]').selectOption('양호');await page.locator('[name=polyp]').selectOption('없음');await page.locator('[name=propofol]').fill('80');await page.locator('#ec-count-mode').selectOption('existing');await page.locator('#ec-case-save').click();await page.waitForTimeout(100);
+ assert.equal(await page.evaluate(()=>testRecords['2026-10-27'].failureCount),2);
+ assert.equal(await page.evaluate(()=>testRecords['2026-10-27'].failureCases.length),1);
+ await page.locator('#ec-day-cases [data-case-action=edit]').click();await page.locator('[name=propofol]').fill('90');await page.locator('#ec-case-save').click();await page.waitForTimeout(100);
+ assert.equal(await page.evaluate(()=>testRecords['2026-10-27'].failureCases[0].propofol),90);
+ await page.evaluate(()=>{failWrite=true});await page.locator('#ec-failure-total').fill('3');await page.locator('#ec-count-form button').click();await page.waitForTimeout(100);assert((await page.locator('#ec-status').innerText()).includes('저장하지 못했습니다'));assert.equal(await page.evaluate(()=>testRecords['2026-10-27'].failureCount),2);await page.evaluate(()=>{failWrite=false});
+ await page.evaluate(()=>ecClose());
+ await page.evaluate(async()=>{await loadDayData('2026-10-27');await saveDay();});
+ assert.equal(await page.evaluate(()=>testRecords['2026-10-27'].failureCases.length),1,'counter save preserves failures');
+ await page.evaluate(()=>{ecChangeMonth('2024-02')});assert.equal(await page.locator('.ec-day').count(),29);
+ await page.evaluate(()=>{ecChangeMonth('2026-10')});
+ let csv=await page.evaluate(()=>{let results={};window.downloadBlob=(n,c,t)=>results[n]=c;for(let range of ['month','year']){ecEl('ec-range').value=range;for(let kind of ['daily','summary','cases'])ecExport(kind)}return results});
+ assert.equal(Object.keys(csv).length,6);assert(csv['EndoApp_2026-10_cases.csv'].includes('"2023 정상, ""완료""\n다음 줄"'));assert(csv['EndoApp_2026_summary.csv'].includes('"2026-12"'));
+ fs.writeFileSync('/tmp/endo-export.json',JSON.stringify(csv));
+ await page.locator('#procedure-calendar').scrollIntoViewIfNeeded();await page.screenshot({path:'/tmp/endo-desktop.png',fullPage:false});
+ for(const width of [768,375]){await page.setViewportSize({width,height:1000});await page.locator('#procedure-calendar').scrollIntoViewIfNeeded();let overflow=await page.locator('#procedure-calendar').evaluate(el=>el.scrollWidth>el.clientWidth);assert(!overflow,'calendar fits width '+width);await page.screenshot({path:'/tmp/endo-'+width+'.png'});}
+ await page.evaluate(()=>ecOpen('2026-10-27'));await page.screenshot({path:'/tmp/endo-form.png'});
+ // Pure invariants, injection safety and count-only records.
+ await page.evaluate(()=>{
+ const a=(x,m)=>{if(!x)throw Error(m)};
+ let p={failureCount:1,failureCases:[]};let record={id:'x'};
+ p=endoCalendar.mutate(p,{type:'save',record,existing:true});a(p.failureCount===1,'existing count');
+ p=endoCalendar.mutate(p,{type:'save',record:{id:'y'}});a(p.failureCount===2,'new count');
+ p=endoCalendar.mutate(p,{type:'delete',id:'x'});a(p.failureCount===1&&p.failureCases.length===1,'delete');
+ let threw=false;try{endoCalendar.mutate(p,{type:'count',count:0})}catch{threw=true}a(threw,'lower bound');
+ a(endoCalendar.csv([['=1+1']]).includes("'=1+1"),'csv injection');
+ a(!ecCaseHTML({history:'<img src=x onerror=alert(1)>',id:'x'},'2026-10-27',true).includes('<img'),'html injection');
+ });
+ await page.evaluate(async()=>{ecClose();ecOpen(TODAY);delete testRecords[TODAY];allDays=allDays.filter(d=>d.key!==TODAY);if(!await ecWrite({type:'count',count:1}))throw Error('failure-only today save failed');});
+ assert.deepEqual(errors,[]);
+ console.log('PASS: initialisation, 31-day and leap calendar, count and case CRUD, save failure, counter preservation, six CSV exports, mobile widths, injection and count invariants');
+ await browser.close();
+})().catch(e=>{console.error(e);process.exit(1)});
