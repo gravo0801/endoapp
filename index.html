@@ -3931,18 +3931,20 @@ document.addEventListener('DOMContentLoaded',()=>{
 
 <script>
 function sedationSetup(){
- const box=document.createElement('div');box.className='ec-card';box.innerHTML='<h3>수면·일반 구분</h3><p class="ec-hint">입력 시 위·대장 총 건수가 자동 합산됩니다. 기존 기록은 미분류로 표시됩니다.</p>'+['am','pm'].map(t=>'<h4>'+ (t==='am'?'오전':'오후')+'</h4><div class="ec-form">'+['egd','cfs'].map(k=>'<div><strong>'+(k==='egd'?'위내시경':'대장내시경')+'</strong>'+['sed','awake','unknown'].map((v,i)=>'<label>'+['수면','일반','미분류'][i]+' <input type="number" min="0" step="1" id="sd_'+t+'_'+k+'_'+v+'" value="0" oninput="sedationSum()"></label>').join('')+'</div>').join('')+'</div>').join('');document.getElementById('bsave').before(box);
+ const box=document.createElement('div');box.className='ec-card';box.innerHTML='<h3>일반내시경 건수</h3><p class="ec-hint">위·대장 총 건수는 기존 카운터에 입력하고, 일반 건수만 아래에 입력하세요. 나머지는 수면으로 자동 계산됩니다.</p>'+['am','pm'].map(t=>'<h4>'+(t==='am'?'오전':'오후')+'</h4><div class="ec-form">'+['egd','cfs'].map(k=>'<label>'+(k==='egd'?'위내시경':'대장내시경')+' 일반 <input type="number" min="0" step="1" id="sd_'+t+'_'+k+'_awake" value="0" oninput="sedationSum()"><span id="sd_preview_'+t+'_'+k+'" class="ec-hint"></span></label>').join('')+'</div>').join('');document.getElementById('bsave').before(box);
+ for(const t of ['am','pm'])for(const k of ['egd','cfs'])document.getElementById((k==='egd'?'ve_':'vc_')+t).addEventListener('input',sedationSum);
+ document.addEventListener('click',()=>sedationSum());
 }
-function sedationLoad(date){const r=allDays.find(d=>d.key===date)||{};for(const t of ['am','pm'])for(const k of ['egd','cfs']){const total=r[t+'_'+k]??(t==='am'?(r[k]||0):0);const sed=r[t+'_'+k+'_sed']||0,awake=r[t+'_'+k+'_awake']||0;for(const [v,n] of [['sed',sed],['awake',awake],['unknown',Math.max(0,total-sed-awake)]])document.getElementById('sd_'+t+'_'+k+'_'+v).value=n;}}
-function sedationSum(){for(const t of ['am','pm'])for(const k of ['egd','cfs']){const n=['sed','awake','unknown'].reduce((a,v)=>a+(+document.getElementById('sd_'+t+'_'+k+'_'+v).value||0),0);document.getElementById((k==='egd'?'ve_':'vc_')+t).value=n;}calcTodayPts();}
-function sedationData(){const o={};for(const k of ['egd','cfs'])for(const v of ['sed','awake','unknown']){o[k+'_'+v]=0;for(const t of ['am','pm']){const n=Number(document.getElementById('sd_'+t+'_'+k+'_'+v).value);if(!Number.isInteger(n)||n<0)throw Error('수면·일반 건수는 0 이상의 정수로 입력해주세요.');o[t+'_'+k+'_'+v]=n;o[k+'_'+v]+=n;}}return o;}
+function sedationLoad(date){const r=allDays.find(d=>d.key===date)||{};for(const t of ['am','pm'])for(const k of ['egd','cfs'])document.getElementById('sd_'+t+'_'+k+'_awake').value=r[t+'_'+k+'_awake']||0;sedationSum();}
+function sedationSum(){for(const t of ['am','pm'])for(const k of ['egd','cfs']){const total=Number(document.getElementById((k==='egd'?'ve_':'vc_')+t).value),awake=Number(document.getElementById('sd_'+t+'_'+k+'_awake').value);document.getElementById('sd_preview_'+t+'_'+k).textContent=awake>total?'일반 건수가 총 건수를 초과합니다.':'총 '+total+'건 · 수면 '+Math.max(0,total-awake)+'건';}}
+function sedationData(){const o={};for(const k of ['egd','cfs']){for(const v of ['sed','awake','unknown'])o[k+'_'+v]=0;for(const t of ['am','pm']){const total=Number(document.getElementById((k==='egd'?'ve_':'vc_')+t).value),awake=Number(document.getElementById('sd_'+t+'_'+k+'_awake').value);if(!Number.isInteger(total)||!Number.isInteger(awake)||awake<0||total<0||awake>total)throw Error('일반 건수는 총 건수 이하의 0 이상 정수로 입력해주세요.');for(const [v,n] of [['sed',total-awake],['awake',awake],['unknown',0]]){o[t+'_'+k+'_'+v]=n;o[k+'_'+v]+=n;}}}return o;}
 function sedationBadges(rec){
  if(!rec)return '';const pm=['egd','cfs','bxe','bxc','cpp','clo'].some(k=>(rec['pm_'+k]||0)>0);
  const badge=(m,n,label)=>n>0?'<span class="ec-badge" style="'+ecMetricStyle(m)+'"><span>'+label+'</span><b>'+n+'</b></span>':'';
  const part=t=>{let out=pm?'<strong style="font-size:10px">'+(t==='am'?'오전':'오후')+'</strong>':'';for(const m of endoCalendar.metrics){const k=m[0];if(k==='failureCount'){if(t==='am')out+=badge(m,endoCalendar.failures(rec),m[2]);continue;}const total=rec[t+'_'+k]??(t==='am'?(rec[k]||0):0);if(k==='egd'||k==='cfs'){let a=rec[t+'_'+k+'_sed']||0,b=rec[t+'_'+k+'_awake']||0;out+=badge(m,a,m[2]+' 수면')+badge(m,b,m[2]+' 일반')+badge(m,Math.max(0,total-a-b),m[2]+' 미분류');}else out+=badge(m,total,m[2]);}return out;};return part('am')+(pm?part('pm'):'');
 }
 sedationSetup();
-for(const t of ['am','pm'])for(const k of ['egd','cfs']){const el=document.getElementById((k==='egd'?'ve_':'vc_')+t);el.readOnly=true;el.parentElement.querySelectorAll('button').forEach(b=>b.disabled=true);}
+
 
 </script>
 </body>
