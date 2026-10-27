@@ -2648,7 +2648,7 @@ function syncCounterPdr(session) {
   var cppEl=document.getElementById('vcpp_'+session);
   var bxcEl=document.getElementById('vbc_'+session);
   var pdrEl=document.getElementById('vpdr_'+session);
-  if(cppEl&&bxcEl&&pdrEl) pdrEl.value=Math.max(+pdrEl.value||0,(+cppEl.value||0)+(+bxcEl.value||0));
+  if(cppEl&&bxcEl&&pdrEl) pdrEl.value=Math.max(+pdrEl.value||0,(+cppEl.value||0)+(+document.getElementById('vemr_'+session)?.value||0)+(+bxcEl.value||0));
 }
 var currentSession = 'am';
 function switchSession(s) {
@@ -2668,8 +2668,8 @@ function switchSession(s) {
 
 function calcTodayPts() {
   var g = function(id){ var e=document.getElementById(id); return e?+e.value||0:0; };
-  var am_egd=g('ve_am'),am_cfs=g('vc_am'),am_bxe=g('vbe_am'),am_bxc=g('vbc_am'),am_cpp=g('vcpp_am'),am_clo=g('vclo_am');
-  var pm_egd=g('ve_pm'),pm_cfs=g('vc_pm'),pm_bxe=g('vbe_pm'),pm_bxc=g('vbc_pm'),pm_cpp=g('vcpp_pm'),pm_clo=g('vclo_pm');
+  var am_egd=g('ve_am'),am_cfs=g('vc_am'),am_bxe=g('vbe_am'),am_bxc=g('vbc_am'),am_cpp=g('vcpp_am')+g('vemr_am'),am_clo=g('vclo_am');
+  var pm_egd=g('ve_pm'),pm_cfs=g('vc_pm'),pm_bxe=g('vbe_pm'),pm_bxc=g('vbc_pm'),pm_cpp=g('vcpp_pm')+g('vemr_pm'),pm_clo=g('vclo_pm');
   var am_pts = Math.round((am_egd*1+am_cfs*2+am_bxe*0.5+am_bxc*0.5+am_cpp*1+am_clo*0.5)*10)/10;
   var pm_pts = Math.round((pm_egd*1+pm_cfs*2+pm_bxe*0.5+pm_bxc*0.5+pm_cpp*1+pm_clo*0.5)*10)/10;
   var total_pts = Math.round((am_pts+pm_pts)*10)/10;
@@ -2744,10 +2744,11 @@ async function saveDay() {
   btn.disabled=true; btn.innerHTML='<span class="spin"></span>저장 중…';
   try {
     const sedation=sedationData();
+    for(const t of ['am','pm']){const n=Number(document.getElementById('vemr_'+t).value);if(!Number.isInteger(n)||n<0)throw Error('EMR 건수는 0 이상의 정수로 입력해주세요.');}
     sedationSum();
     var g = function(id){ var e=document.getElementById(id); return e?+e.value||0:0; };
-    const am_egd=g('ve_am'),am_cfs=g('vc_am'),am_bxe=g('vbe_am'),am_bxc=g('vbc_am'),am_cpp=g('vcpp_am'),am_clo=g('vclo_am');
-    const pm_egd=g('ve_pm'),pm_cfs=g('vc_pm'),pm_bxe=g('vbe_pm'),pm_bxc=g('vbc_pm'),pm_cpp=g('vcpp_pm'),pm_clo=g('vclo_pm');
+    const am_egd=g('ve_am'),am_cfs=g('vc_am'),am_bxe=g('vbe_am'),am_bxc=g('vbc_am'),am_cpp=g('vcpp_am')+g('vemr_am'),am_clo=g('vclo_am');
+    const pm_egd=g('ve_pm'),pm_cfs=g('vc_pm'),pm_bxe=g('vbe_pm'),pm_bxc=g('vbc_pm'),pm_cpp=g('vcpp_pm')+g('vemr_pm'),pm_clo=g('vclo_pm');
     const am_pdr=g('vpdr_am'),pm_pdr=g('vpdr_pm'),pdr=am_pdr+pm_pdr;
     // 합산 (기존 필드 호환성 유지)
     const egd=am_egd+pm_egd, cfs=am_cfs+pm_cfs, bxe=am_bxe+pm_bxe;
@@ -2766,6 +2767,7 @@ async function saveDay() {
       key:date, month:date.slice(0,7),
       egd, cfs, bxe, bxc, cpp, clo, pts,
       ...sedation,
+      am_emr:g('vemr_am'),pm_emr:g('vemr_pm'),emr:g('vemr_am')+g('vemr_pm'),
       am_egd, am_cfs, am_bxe, am_bxc, am_cpp, am_clo,
       pm_egd, pm_cfs, pm_bxe, pm_bxc, pm_cpp, pm_pdr, pm_clo,
       am_pdr,
@@ -2951,7 +2953,7 @@ async function delDay(key) {
 
 function exportCSV() {
   if(!allDays.length){toast('내보낼 기록이 없습니다.');return;}
-  const rows=[['날짜','EGD','Bx-E','CFS','Bx-C','CPP','PDR','ADR','CLO','점수','소계','진입실패','실패상세작성']];
+  const rows=[['날짜','EGD','Bx-E','CFS','Bx-C','용종절제전체_CPP+EMR','PDR','ADR','CLO','점수','소계','진입실패','실패상세작성']];
   [...allDays].sort((a,b)=>a.key.localeCompare(b.key)).forEach(d=>rows.push([d.key,d.egd||0,d.bxe||0,d.cfs||0,d.bxc||0,d.cpp||0,getPdrCount(d),d.adr??'',d.clo||0,d.pts||0,(d.egd||0)+(d.cfs||0),endoCalendar.failures(d),endoCalendar.cases(d).length]));
   const csv='\uFEFF'+rows.map(r=>r.join(',')).join('\n');
   const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8;'}));a.download=`EndoCount_${TODAY}.csv`;a.click();
@@ -3785,7 +3787,7 @@ let noteTagFilter_='';function buildNoteTagFilters_(){buildNoteTagFilters();}
 const endoCalendar = (() => {
   const metrics = [
     ['egd','위내시경','위','#1d5fc8','#ebf1fd'],['cfs','대장내시경','대장','#18723a','#e8f7ed'],
-    ['cpp','용종절제술','절제','#b24d16','#fff0e7'],['bxe','위 조직검사','위Bx','#876008','#fdf3d8'],
+    ['cpp','용종절제 전체','CPP+EMR','#b24d16','#fff0e7'],['bxe','위 조직검사','위Bx','#876008','#fdf3d8'],
     ['bxc','대장 조직검사','대장Bx','#7137b5','#f0eafa'],['clo','헬리코박터','CLO','#087a87','#e4f7f8'],
     ['failureCount','진입 실패','실패','#b02848','#fbeaf0']
   ];
@@ -3903,6 +3905,9 @@ function ecExport(kind){
     data.forEach(d=>rows.push([d.key,...endoCalendar.metrics.map(m=>endoCalendar.value(d,m[0])),getPdrCount(d),d.adr??'',d.pts??'',endoCalendar.count(d.egd)+endoCalendar.count(d.cfs),endoCalendar.cases(d).length,endoCalendar.failures(d)-endoCalendar.cases(d).length,d.failureCount==null?'미입력':'입력',...['am','pm'].flatMap(s=>endoCalendar.metrics.slice(0,6).map(m=>d[s+'_'+m[0]]??''))]));
   }
   if(kind!=='cases'){
+    rows[0].push('CPP','EMR','오전_CPP','오전_EMR','오후_CPP','오후_EMR');
+    rows.slice(1).forEach(row=>{const list=kind==='daily'?data.filter(d=>d.key===row[0]):row[0]==='합계'?data:data.filter(d=>d.key.startsWith(row[0]));const sum=(k)=>list.reduce((n,d)=>n+(d[k]||0),0);row.push(Math.max(0,sum('cpp')-sum('emr')),sum('emr'),Math.max(0,list.reduce((n,d)=>n+(d.am_cpp??d.cpp??0),0)-sum('am_emr')),sum('am_emr'),Math.max(0,sum('pm_cpp')-sum('pm_emr')),sum('pm_emr'));});
+
     const keys=['egd','cfs'].flatMap(k=>['sed','awake','unknown'].map(v=>k+'_'+v));
     rows[0].push(...['위','대장'].flatMap(k=>['수면','일반','미분류'].map(v=>k+'_'+v)));
     rows.slice(1).forEach(row=>{const list=kind==='daily'?data.filter(d=>d.key===row[0]):row[0]==='합계'?data:data.filter(d=>d.key.startsWith(row[0]));row.push(...keys.map(key=>list.reduce((n,d)=>{const [k,v]=key.split('_');if(v==='unknown')return n+Math.max(0,(d[k]||0)-(d[k+'_sed']||0)-(d[k+'_awake']||0));return n+(d[key]||0);},0)));});
@@ -3937,23 +3942,25 @@ function sedationSetup(){
  for(const t of ['am','pm'])for(const k of ['egd','cfs'])document.getElementById((k==='egd'?'ve_':'vc_')+t).addEventListener('input',sedationSum);
  document.addEventListener('click',()=>sedationSum());
 }
-function sedationLoad(date){const r=allDays.find(d=>d.key===date)||{};for(const t of ['am','pm'])for(const k of ['egd','cfs'])document.getElementById('sd_'+t+'_'+k+'_awake').value=r[t+'_'+k+'_awake']||0;sedationSum();}
+function sedationLoad(date){const r=allDays.find(d=>d.key===date)||{};for(const t of ['am','pm'])for(const k of ['egd','cfs'])document.getElementById('sd_'+t+'_'+k+'_awake').value=r[t+'_'+k+'_awake']||0;for(const t of ['am','pm']){document.getElementById('vemr_'+t).value=r[t+'_emr']||0;const el=document.getElementById('vcpp_'+t);el.value=Math.max(0,(+el.value||0)-(r[t+'_emr']||0));}sedationSum();calcTodayPts();}
 function sedationSum(){for(const t of ['am','pm'])for(const k of ['egd','cfs']){const total=Number(document.getElementById((k==='egd'?'ve_':'vc_')+t).value),awake=Number(document.getElementById('sd_'+t+'_'+k+'_awake').value);document.getElementById('sd_preview_'+t+'_'+k).textContent=awake>total?'일반 건수가 총 건수를 초과합니다.':'총 '+total+'건 · 수면 '+Math.max(0,total-awake)+'건';}}
 function sedationData(){const o={};for(const k of ['egd','cfs']){for(const v of ['sed','awake','unknown'])o[k+'_'+v]=0;for(const t of ['am','pm']){const total=Number(document.getElementById((k==='egd'?'ve_':'vc_')+t).value),awake=Number(document.getElementById('sd_'+t+'_'+k+'_awake').value);if(!Number.isInteger(total)||!Number.isInteger(awake)||awake<0||total<0||awake>total)throw Error('일반 건수는 총 건수 이하의 0 이상 정수로 입력해주세요.');for(const [v,n] of [['sed',total-awake],['awake',awake],['unknown',0]]){o[t+'_'+k+'_'+v]=n;o[k+'_'+v]+=n;}}}return o;}
 function sedationBadges(rec){
  if(!rec)return '';
  const pm=['egd','cfs','bxe','bxc','cpp','clo'].some(k=>(rec['pm_'+k]||0)>0);
- const amount=(t,k)=>rec[t+'_'+k]??(t==='am'?(rec[k]||0):0);
+ const amount=(t,k)=>{const n=rec[t+'_'+k]??(t==='am'?(rec[k]||0):0);return k==='cpp'?Math.max(0,n-(rec[t+'_emr']||0)):n;};
  const cell=(t,k)=>{const n=amount(t,k);if(!n)return '–';if(k!=='egd'&&k!=='cfs')return String(n);const awake=rec[t+'_'+k+'_awake'];const sed=rec[t+'_'+k+'_sed'];return n+(awake>0?'·'+awake:(awake==null&&sed==null?'?':Math.max(0,n-(awake||0)-(sed||0))>0?'?':''));};
  let out=pm?'<span class="ec-compact-head"><span></span><span>오전</span><span>오후</span></span>':'';
- for(const m of endoCalendar.metrics){const k=m[0];if(k==='failureCount'){const n=endoCalendar.failures(rec);if(n)out+='<span class="ec-badge" style="'+ecMetricStyle(m)+'"><span>실패</span><b>'+n+'</b></span>';continue;}
+ for(const m of [...endoCalendar.metrics.slice(0,3),['emr','EMR','EMR','#9c3c78','#f8eaf3'],...endoCalendar.metrics.slice(3)]){const k=m[0];if(k==='failureCount'){const n=endoCalendar.failures(rec);if(n)out+='<span class="ec-badge" style="'+ecMetricStyle(m)+'"><span>실패</span><b>'+n+'</b></span>';continue;}
  if(!amount('am',k)&&!amount('pm',k))continue;
  const title=m[1]+': 오전 '+cell('am',k)+(pm?' / 오후 '+cell('pm',k):'')+' (총건수·일반건수, ?는 미분류 포함)';
- out+='<span class="ec-badge '+(pm?'ec-compact-row':'')+'" style="'+ecMetricStyle(m)+'" title="'+title+'"><span>'+m[2]+'</span><b>'+cell('am',k)+'</b>'+(pm?'<b>'+cell('pm',k)+'</b>':'')+'</span>';
+ out+='<span class="ec-badge '+(pm?'ec-compact-row':'')+'" style="'+ecMetricStyle(m)+'" title="'+title+'"><span>'+(k==='cpp'?'CPP':m[2])+'</span><b>'+cell('am',k)+'</b>'+(pm?'<b>'+cell('pm',k)+'</b>':'')+'</span>';
  }return out;
 }
 
 sedationSetup();
+for(const t of ['am','pm']){const el=document.getElementById('vcpp_'+t);const wrap=document.createElement('label');wrap.style.cssText='display:block;padding:10px';wrap.innerHTML=(t==='am'?'오전':'오후')+' EMR (위 CPP 입력과 별도 집계)  <input type="number" id="vemr_'+t+'" min="0" step="1" value="0" style="width:80px" oninput="syncCounterPdr(\''+t+'\');calcTodayPts()">';document.getElementById('bsave').before(wrap);}
+
 
 
 </script>
