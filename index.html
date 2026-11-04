@@ -3938,7 +3938,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 
 <script>
 function sedationSetup(){
- const box=document.createElement('div');box.className='ec-card';box.innerHTML='<h3>일반내시경 건수</h3><p class="ec-hint">위·대장 총 건수는 기존 카운터에 입력하고, 일반 건수만 아래에 입력하세요. 나머지는 수면으로 자동 계산됩니다.</p>'+['am','pm'].map(t=>'<h4>'+(t==='am'?'오전':'오후')+'</h4><div class="ec-form">'+['egd','cfs'].map(k=>'<label>'+(k==='egd'?'위내시경':'대장내시경')+' 일반 <input type="number" min="0" step="1" id="sd_'+t+'_'+k+'_awake" value="0" oninput="sedationSum()"><span id="sd_preview_'+t+'_'+k+'" class="ec-hint"></span></label>').join('')+'</div>').join('');document.getElementById('bsave').before(box);
+ const box=document.createElement('details');box.className='ec-card';box.innerHTML='<summary style="cursor:pointer;font-weight:600">일반내시경 건수 입력</summary><p class="ec-hint">위·대장 총 건수는 기존 카운터에 입력하고, 일반 건수만 아래에 입력하세요. 나머지는 수면으로 자동 계산됩니다.</p>'+['am','pm'].map(t=>'<h4>'+(t==='am'?'오전':'오후')+'</h4><div class="ec-form">'+['egd','cfs'].map(k=>'<label>'+(k==='egd'?'위내시경':'대장내시경')+' 일반 <input type="number" min="0" step="1" id="sd_'+t+'_'+k+'_awake" value="0" oninput="sedationSum()"><span id="sd_preview_'+t+'_'+k+'" class="ec-hint"></span></label>').join('')+'</div>').join('');document.getElementById('bsave').before(box);
  for(const t of ['am','pm'])for(const k of ['egd','cfs'])document.getElementById((k==='egd'?'ve_':'vc_')+t).addEventListener('input',sedationSum);
  document.addEventListener('click',()=>sedationSum());
 }
