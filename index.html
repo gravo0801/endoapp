@@ -1617,7 +1617,7 @@ html,body{height:100%;font-family:'Noto Sans KR',sans-serif;background:var(--sb)
           <div style="overflow-x:auto;max-height:320px;overflow-y:auto;">
             <table class="hist-table">
               <thead style="position:sticky;top:0;background:var(--surface);z-index:1;">
-                <tr><th>날짜</th><th>EGD</th><th>Bx-E</th><th>CFS</th><th>Bx-C</th><th>CPP</th><th>CLO</th><th>PTS</th><th>계</th><th></th></tr>
+                <tr><th>날짜</th><th>EGD</th><th>Bx-E</th><th>CFS</th><th>Bx-C</th><th>CPP</th><th>EMR</th><th>CLO</th><th>PTS</th><th>계</th><th></th></tr>
               </thead>
               <tbody id="hbody"></tbody>
             </table>
@@ -2059,7 +2059,7 @@ html,body{height:100%;font-family:'Noto Sans KR',sans-serif;background:var(--sb)
     <div class="mrow"><span class="mlbl">조직검사 (위)</span><input class="minp" type="number" id="ebxe" min="0"/></div>
     <div class="mrow"><span class="mlbl">대장내시경</span><input class="minp" type="number" id="ecfs" min="0"/></div>
     <div class="mrow"><span class="mlbl">조직검사 (대장)</span><input class="minp" type="number" id="ebxc" min="0"/></div>
-    <div class="mrow"><span class="mlbl">용종절제술 CPP</span><input class="minp" type="number" id="ecpp" min="0"/></div>
+    <div class="mrow"><span class="mlbl">용종절제 합계 (CPP+EMR)</span><input class="minp" type="number" id="ecpp" min="0"/></div>
     <div class="mrow"><span class="mlbl">용종 발견 PDR</span><input class="minp" type="number" id="epdr" min="0"/></div>
     <div class="mrow"><span class="mlbl">CLO</span><input class="minp" type="number" id="eclo" min="0"/></div>
     <div class="mbtns">
@@ -2160,7 +2160,8 @@ const PROCEDURE_METRICS = [
   {key:'cfs', label:'대장내시경 (CFS)', icon:'🟩'},
   {key:'bxe', label:'위 조직검사 (Bx-E)', icon:'🟨'},
   {key:'bxc', label:'대장 조직검사 (Bx-C)', icon:'🟧'},
-  {key:'cpp', label:'용종절제술 (CPP)', icon:'🟥'},
+  {key:'cppOnly', label:'용종절제술 (CPP)', icon:'🟥'},
+  {key:'emr', label:'점막절제술 (EMR)', icon:'🟫'},
   {key:'clo', label:'CLO (헬리코박터)', icon:'🟪'}
 ];
 const GRADE_H1 = [{g:'EX',min:1100,amt:'250만'},{g:'VG',min:1000,amt:'200만'},{g:'GD',min:900,amt:'150만'},{g:'NI',min:800,amt:'100만'},{g:'UN',min:0,amt:'50만'}];
@@ -2688,7 +2689,8 @@ function calcTodayPts() {
     var s_bxc=isPmSession?pm_bxc:am_bxc;
     var s_cpp=isPmSession?pm_cpp:am_cpp;
     var s_clo=isPmSession?pm_clo:am_clo;
-    bdEl.textContent='EGD '+s_egd+' + CFS '+s_cfs+' + Bx '+(s_bxe+s_bxc)+' + CPP '+s_cpp+' + CLO '+s_clo;
+    var s_emr=g(isPmSession?'vemr_pm':'vemr_am');
+    bdEl.textContent='EGD '+s_egd+' + CFS '+s_cfs+' + Bx '+(s_bxe+s_bxc)+' + CPP '+Math.max(0,s_cpp-s_emr)+' + EMR '+s_emr+' + CLO '+s_clo;
   }
   var badge=document.getElementById('work-type-badge');
   if(badge){
@@ -2727,7 +2729,7 @@ async function loadDayData(date) {
     const pts=rec.pts||0;
     note.style.display='block';
     var fTag = rec.fullDay ? ' 🌟 풀근무' : ' ☀️ 오전';
-    note.innerHTML='저장된 기록 — EGD <strong>'+(rec.egd||0)+'</strong> · CFS <strong>'+(rec.cfs||0)+'</strong> · Bx-E '+(rec.bxe||0)+' · Bx-C '+(rec.bxc||0)+' · CPP '+(rec.cpp||0)+' · PDR '+getPdrCount(rec)+' · CLO '+(rec.clo||0)+'&nbsp;|&nbsp;<strong>'+pts+'p</strong>'+fTag;
+    note.innerHTML='저장된 기록 — EGD <strong>'+(rec.egd||0)+'</strong> · CFS <strong>'+(rec.cfs||0)+'</strong> · Bx-E '+(rec.bxe||0)+' · Bx-C '+(rec.bxc||0)+' · CPP '+Math.max(0,(rec.cpp||0)-(rec.emr||0))+' · EMR '+(rec.emr||0)+' · PDR '+getPdrCount(rec)+' · CLO '+(rec.clo||0)+'&nbsp;|&nbsp;<strong>'+pts+'p</strong>'+fTag;
   } else {
     ['ve_am','vc_am','vbe_am','vbc_am','vcpp_am','vpdr_am','vclo_am',
      've_pm','vc_pm','vbe_pm','vbc_pm','vcpp_pm','vpdr_pm','vclo_pm'].forEach(function(id){g(id,0);});
@@ -2808,9 +2810,9 @@ function renderProcedureDashboard() {
   const todayRec=periods.todayRec;
   const weekRows=periods.weekRows;
   const monthRows=periods.monthRows;
-  const sum=function(rows,key){return rows.reduce(function(total,row){return total+(+row[key]||0);},0);};
+  const sum=function(rows,key){return rows.reduce(function(total,row){return total+endoCalendar.value(row,key);},0);};
   grid.innerHTML=PROCEDURE_METRICS.map(function(metric){
-    const day=+todayRec[metric.key]||0;
+    const day=endoCalendar.value(todayRec,metric.key);
     const week=sum(weekRows,metric.key);
     const month=sum(monthRows,metric.key);
     return '<article class="proc-card">'
@@ -2847,7 +2849,7 @@ function renderHist() {
       <td class="dtxt"><span class="mono">${d.key}</span><span class="wk">${WD[dt.getDay()]}</span>${isT?'<span class="td-pill">오늘</span>':''}${d.fullDay?'<span style="font-size:9px;color:#047857;background:#D1FAE5;border-radius:8px;padding:1px 5px;margin-left:3px;">풀</span>':''}</td>
       <td><span class="hn he">${d.egd||0}</span></td><td><span class="hn hbe">${d.bxe||0}</span></td>
       <td><span class="hn hc">${d.cfs||0}</span></td><td><span class="hn hbc">${d.bxc||0}</span></td>
-      <td>${d.cpp||0}</td><td>${d.clo||0}</td>
+      <td>${Math.max(0,(d.cpp||0)-(d.emr||0))}</td><td>${d.emr||0}</td><td>${d.clo||0}</td>
       <td><span class="pts-cell">${d.pts||0}p</span></td>
       <td><span class="hn htot">${(d.egd||0)+(d.cfs||0)}</span></td>
       <td><div style="display:flex;gap:5px;justify-content:flex-end;">
@@ -3787,14 +3789,14 @@ let noteTagFilter_='';function buildNoteTagFilters_(){buildNoteTagFilters();}
 const endoCalendar = (() => {
   const metrics = [
     ['egd','위내시경','위','#1d5fc8','#ebf1fd'],['cfs','대장내시경','대장','#18723a','#e8f7ed'],
-    ['cpp','용종절제 전체','CPP+EMR','#b24d16','#fff0e7'],['bxe','위 조직검사','위Bx','#876008','#fdf3d8'],
-    ['bxc','대장 조직검사','대장Bx','#7137b5','#f0eafa'],['clo','헬리코박터','CLO','#087a87','#e4f7f8'],
+    ['cppOnly','CPP','CPP','#b24d16','#fff0e7'],['bxe','위 조직검사','위Bx','#876008','#fdf3d8'],
+    ['emr','EMR','EMR','#9c3c78','#f8eaf3'],['bxc','대장 조직검사','대장Bx','#7137b5','#f0eafa'],['clo','헬리코박터','CLO','#087a87','#e4f7f8'],
     ['failureCount','진입 실패','실패','#b02848','#fbeaf0']
   ];
   const count = n => Number.isFinite(+n) && +n >= 0 ? +n : 0;
   const cases = d => Array.isArray(d && d.failureCases) ? d.failureCases : [];
   const failures = d => Math.max(count(d && d.failureCount),cases(d).length);
-  const value = (d,k) => k==='failureCount' ? failures(d) : count(d && d[k]);
+  const value = (d,k) => k==='failureCount' ? failures(d) : k==='cppOnly' ? (d&&d.cppOnly!=null ? count(d.cppOnly) : Math.max(0,count(d&&d.cpp)-count(d&&d.emr))) : count(d && d[k]);
   const sum = rows => Object.fromEntries(metrics.map(([k])=>[k,rows.reduce((s,d)=>s+value(d,k),0)]));
   const escape = s => String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const csv = rows => '\uFEFF'+rows.map(r=>r.map(v=>{let s=String(v??'');if(/^[\s]*[=+@-]/.test(s))s="'"+s;return '"'+s.replace(/"/g,'""')+'"';}).join(',')).join('\r\n');
@@ -3948,10 +3950,10 @@ function sedationData(){const o={};for(const k of ['egd','cfs']){for(const v of 
 function sedationBadges(rec){
  if(!rec)return '';
  const pm=['egd','cfs','bxe','bxc','cpp','clo'].some(k=>(rec['pm_'+k]||0)>0);
- const amount=(t,k)=>{const n=rec[t+'_'+k]??(t==='am'?(rec[k]||0):0);return k==='cpp'?Math.max(0,n-(rec[t+'_emr']||0)):n;};
+ const amount=(t,k)=>{const field=k==='cppOnly'?'cpp':k;const n=rec[t+'_'+field]??(t==='am'?(rec[field]||0):0);const emr=rec[t+'_emr']??(t==='am'?(rec.emr||0):0);return k==='cppOnly'?Math.max(0,n-emr):n;};
  const cell=(t,k)=>{const n=amount(t,k);if(!n)return '–';if(k!=='egd'&&k!=='cfs')return String(n);const awake=rec[t+'_'+k+'_awake'];const sed=rec[t+'_'+k+'_sed'];return n+(awake>0?'·'+awake:(awake==null&&sed==null?'?':Math.max(0,n-(awake||0)-(sed||0))>0?'?':''));};
  let out=pm?'<span class="ec-compact-head"><span></span><span>오전</span><span>오후</span></span>':'';
- for(const m of [...endoCalendar.metrics.slice(0,3),['emr','EMR','EMR','#9c3c78','#f8eaf3'],...endoCalendar.metrics.slice(3)]){const k=m[0];if(k==='failureCount'){const n=endoCalendar.failures(rec);if(n)out+='<span class="ec-badge" style="'+ecMetricStyle(m)+'"><span>실패</span><b>'+n+'</b></span>';continue;}
+ for(const m of endoCalendar.metrics){const k=m[0];if(k==='failureCount'){const n=endoCalendar.failures(rec);if(n)out+='<span class="ec-badge" style="'+ecMetricStyle(m)+'"><span>실패</span><b>'+n+'</b></span>';continue;}
  if(!amount('am',k)&&!amount('pm',k))continue;
  const title=m[1]+': 오전 '+cell('am',k)+(pm?' / 오후 '+cell('pm',k):'')+' (총건수·일반건수, ?는 미분류 포함)';
  out+='<span class="ec-badge '+(pm?'ec-compact-row':'')+'" style="'+ecMetricStyle(m)+'" title="'+title+'"><span>'+(k==='cpp'?'CPP':m[2])+'</span><b>'+cell('am',k)+'</b>'+(pm?'<b>'+cell('pm',k)+'</b>':'')+'</span>';
@@ -3966,4 +3968,5 @@ for(const t of ['am','pm']){const el=document.getElementById('vcpp_'+t);const wr
 </script>
 </body>
 </html>
+
 
