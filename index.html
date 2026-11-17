@@ -1061,29 +1061,33 @@ html,body{height:100%;font-family:'Noto Sans KR',sans-serif;background:var(--sb)
 .full-day-badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:500;background:#D1FAE5;color:#047857;}
 .am-only-badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:500;background:#EBF4FF;color:#1D5FC8;}
 
-/* ── 시술 건수 대시보드 ── */
-.proc-dashboard{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px;margin-bottom:16px;}
-.proc-dashboard-head{display:flex;align-items:flex-end;justify-content:space-between;gap:10px;margin-bottom:12px;flex-wrap:wrap;}
-.proc-dashboard-title{font-size:13px;font-weight:700;color:var(--text);}
-.proc-dashboard-sub{font-size:10px;color:var(--text3);}
-.proc-dashboard-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;}
-.proc-card{background:var(--surface2);border:1px solid var(--border);border-radius:var(--rsm);padding:11px;min-width:0;}
-.proc-card-name{font-size:11px;font-weight:700;color:var(--text2);margin-bottom:9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.proc-periods{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;}
-.proc-period{background:var(--surface);border-radius:7px;padding:7px 4px;text-align:center;min-width:0;}
-.proc-period-label{font-size:9px;color:var(--text3);margin-bottom:3px;}
-.proc-period-value{font-family:'DM Mono',monospace;font-size:15px;font-weight:500;color:var(--text);}
-.proc-period-value.today{color:var(--egd-dark);}
 .adr-auto-input{background:var(--surface)!important;color:var(--cfs-dark)!important;font-weight:700;cursor:not-allowed;}
 .adr-definition-note{font-size:10px;line-height:1.6;color:var(--text3);background:var(--surface);border:1px dashed var(--border2);border-radius:var(--rsm);padding:8px 10px;margin-bottom:10px;}
-@media(max-width:900px){.proc-dashboard-grid{grid-template-columns:repeat(2,minmax(0,1fr));}}
-@media(max-width:520px){.proc-dashboard-grid{grid-template-columns:1fr;}.proc-dashboard{padding:12px;}}
 
 .ec-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:20px;margin:16px 0;color:var(--text)}
 .ec-heading,.ec-tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.ec-heading{justify-content:space-between;margin-bottom:16px}.ec-heading h2{font-size:20px}.ec-heading p,.ec-hint{font-size:12px;color:var(--text2);margin:8px 0}.ec-card button,.ec-dialog button{border:1px solid var(--border);background:var(--surface);color:var(--text);padding:8px 12px;border-radius:8px;cursor:pointer;font:inherit}.ec-card button:hover,.ec-dialog button:hover{background:var(--surface2)}.ec-card input,.ec-card select,.ec-dialog input,.ec-dialog select,.ec-dialog textarea{font:inherit;padding:8px;border:1px solid var(--border2);border-radius:6px;max-width:100%;background:white;color:var(--text)}.ec-summary{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}.ec-metric{border-left:3px solid var(--mc);background:var(--mb);color:var(--mc);padding:8px 12px;border-radius:6px;font-size:12px}.ec-metric strong{display:block;font:600 23px 'DM Mono',monospace}.ec-week,.ec-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr))}.ec-week{text-align:center;font-size:12px;color:var(--text2);padding:12px 0 6px}.ec-week span:first-child{color:#b02828}.ec-week span:last-child{color:#1d5fc8}.ec-grid{gap:5px}.ec-card .ec-day{padding:7px 5px;min-height:80px;border:1px solid var(--border);border-radius:8px;text-align:left;display:flex;flex-direction:column;gap:3px;overflow:hidden}.ec-day[aria-current="date"]{outline:2px solid var(--egd);outline-offset:-2px}.ec-date{font-size:12px;font-weight:bold;padding:0 3px}.ec-badge{display:flex;justify-content:space-between;gap:3px;background:var(--mb);color:var(--mc);padding:1px 5px;border-radius:4px;font-size:11px;line-height:1.6}.ec-empty{font-size:10px;color:var(--text3);padding:4px}.ec-month-cases{margin-top:18px;border-top:1px solid var(--border);padding-top:12px}.ec-month-cases summary{cursor:pointer;font-weight:bold;margin-bottom:12px}.ec-case{border:1px solid var(--border);border-radius:8px;padding:12px;margin:8px 0;overflow-wrap:anywhere}.ec-case p{font-size:12px;white-space:pre-wrap;margin:6px 0}.ec-dialog{position:fixed;inset:0;margin:auto;width:min(760px,94vw);max-height:90dvh;overflow-y:auto;border:1px solid var(--border);border-radius:16px;padding:22px;background:var(--surface);color:var(--text)}.ec-dialog::backdrop{background:#0f162399}.ec-dialog hr{border:0;border-top:1px solid var(--border);margin:18px 0}.ec-form{display:grid;grid-template-columns:1fr 1fr;gap:12px}.ec-form label{display:flex;flex-direction:column;gap:5px;font-size:12px}.ec-form textarea{min-height:70px;resize:vertical}.ec-wide{grid-column:1/-1}#ec-count-form{display:flex;gap:8px;flex-wrap:wrap;align-items:end}#ec-failure-total{width:90px}#ec-status{color:#b02828;margin-top:12px;white-space:pre-wrap}.ec-dialog button:disabled{opacity:.5;cursor:wait}.ec-export{margin:14px 0;font-size:12px}@media(max-width:600px){.ec-card{padding:10px}.ec-grid{gap:2px}.ec-card .ec-day{padding:4px 2px;border-radius:4px}.ec-badge{font-size:9px;padding:1px 2px;gap:1px}.ec-metric{padding:5px 8px}.ec-metric strong{font-size:18px}.ec-heading h2{font-size:17px}.ec-dialog{padding:14px}.ec-heading{gap:8px}.ec-empty{font-size:9px;padding:2px}}
 
 
 .ec-compact-head,.ec-card .ec-compact-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1fr);gap:2px;align-items:center}.ec-compact-head{font-size:9px;color:var(--text2);text-align:right;padding:0 4px}.ec-compact-row b{text-align:right;white-space:nowrap}.ec-compact-row span{white-space:nowrap;overflow:hidden}.ec-card .ec-day{gap:2px}.ec-compact-row b:last-child{border-left:1px solid #0002;padding-left:2px}@media(max-width:600px){.ec-compact-head{font-size:8px;padding:0 1px}.ec-card .ec-compact-row{font-size:8px;gap:1px;letter-spacing:-.4px}}
+
+/* Unified procedure overview */
+.ec-mobile-badge{display:none}.ec-overview{padding:22px;margin:0 0 18px;border-radius:20px;background:linear-gradient(135deg,#f6f9ff 0%,var(--surface) 45%);box-shadow:0 4px 20px #233a5e06}
+.ec-eyebrow{display:block;font:500 10px 'DM Mono',monospace;letter-spacing:1.8px;color:var(--egd-dark);margin-bottom:5px}
+.ec-overview .ec-heading h2{margin:0;font-size:21px;letter-spacing:-.6px}.ec-overview .ec-heading p{margin:6px 0 0}
+.ec-scope{display:flex;gap:4px;padding:4px;background:var(--surface2);border:1px solid var(--border);border-radius:12px;width:fit-content;margin:18px 0 16px}
+.ec-scope button{font-size:12px;padding:8px 15px;background:transparent;border-color:transparent;border-radius:9px;white-space:nowrap}
+.ec-scope button[aria-pressed="true"]{background:var(--text);border-color:var(--text);color:#fff;box-shadow:0 2px 5px #0001}
+.ec-scope button:focus-visible,.ec-day:focus-visible{outline:3px solid var(--egd);outline-offset:2px}
+.ec-period-info{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px}.ec-period-info strong{font-size:14px}.ec-period-info>span{font:11px 'DM Mono',monospace;color:var(--text2)}
+.ec-overview>.ec-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin:12px 0}
+.ec-overview .ec-metric{border-left:0;border-top:3px solid var(--mc);border-radius:10px;padding:11px 13px;font-size:12px;min-width:0}
+.ec-metric strong{margin-top:5px;font-size:25px;white-space:nowrap}.ec-metric strong small{font:400 10px 'Noto Sans KR',sans-serif;margin-left:5px;opacity:.75}
+.ec-summary-note{font-size:11px;line-height:1.7;color:var(--text2);margin:8px 0 18px}
+.ec-calendar-view{border-top:1px solid var(--border);padding-top:14px}.ec-calendar-view>summary{display:flex;justify-content:space-between;align-items:center;gap:8px;cursor:pointer;font-size:14px;font-weight:600;list-style:none}.ec-calendar-view summary small{display:block;font-size:11px;color:var(--text2);font-weight:400;margin-top:4px}.ec-disclosure{font-size:10px;color:var(--text3);font-weight:400;white-space:nowrap}
+.ec-calendar-view summary::-webkit-details-marker{display:none}.ec-overview .ec-day{min-height:92px;background:var(--surface);transition:background .12s,border-color .12s}.ec-overview .ec-day:hover{border-color:var(--egd);background:#f4f8ff}.ec-overview .ec-date{font:500 13px 'DM Mono',monospace;padding:3px}.ec-overview .ec-day[aria-current="date"] .ec-date{color:var(--egd-dark);font-weight:700}
+.ec-utilities{border-top:1px solid var(--border);padding-top:12px;margin-top:14px}.ec-utilities>summary{cursor:pointer;font-size:12px;color:var(--text2)}.ec-overview .ec-month-cases{font-size:12px;margin-top:12px}.ec-overview .ec-month-cases summary{font-weight:500}
+@media(min-width:1250px){.ec-overview>.ec-summary{grid-template-columns:repeat(8,minmax(0,1fr))}.ec-overview .ec-metric{padding:10px 8px;font-size:11px}}
+@media(max-width:600px){.ec-overview .ec-day>.ec-badge:not(.ec-mobile-badge),.ec-overview .ec-compact-head{display:none}.ec-overview .ec-mobile-badge{display:flex;white-space:nowrap;font-size:9px;padding:1px}.ec-overview{padding:13px;border-radius:15px}.ec-overview .ec-heading{align-items:flex-start}.ec-overview .ec-heading h2{font-size:19px}.ec-overview .ec-tools{gap:5px}.ec-overview .ec-tools button{padding:7px 9px;font-size:12px}.ec-overview .ec-tools input{font-size:12px;min-width:0}.ec-scope{width:100%}.ec-scope button{flex:1;padding:8px 4px;font-size:12px}.ec-overview>.ec-summary{gap:5px}.ec-overview .ec-metric{padding:8px 5px;font-size:10px;letter-spacing:-.4px}.ec-overview .ec-metric strong{font-size:21px;letter-spacing:-1px}.ec-overview .ec-day{min-height:66px}.ec-period-info>span{font-size:10px}.ec-calendar-view>summary{font-size:13px}.ec-overview .ec-badge{line-height:1.8}}
 </style>
 </head>
 <body>
@@ -1169,7 +1173,7 @@ html,body{height:100%;font-family:'Noto Sans KR',sans-serif;background:var(--sb)
         <div style="margin-left:auto;display:flex;gap:7px;flex-wrap:wrap;">
           <button class="chip" onclick="toggleTargetEdit()">⚙ 목표</button>
           <button class="chip" onclick="runAIAnalysis()">📌 목표 분석</button>
-          <button class="chip" onclick="document.getElementById('procedure-calendar').scrollIntoView({behavior:'smooth'})">캘린더·실패·CSV</button><button class="chip" onclick="exportCSV()">전체 CSV</button>
+          <button class="chip" onclick="document.getElementById('procedure-calendar').scrollIntoView({behavior:'smooth'})">시술 현황·캘린더</button><button class="chip" onclick="exportCSV()">전체 CSV</button>
           <button class="chip" onclick="exportFullBackup()">JSON 백업</button>
           <button class="chip" onclick="document.getElementById('json-restore-file').click()">JSON 복원</button>
           <input id="json-restore-file" type="file" accept="application/json,.json" style="display:none" onchange="importFullBackup(event)"/>
@@ -1291,24 +1295,27 @@ html,body{height:100%;font-family:'Noto Sans KR',sans-serif;background:var(--sb)
           <div class="inc-stat"><div class="inc-stat-lbl">🎯 일일 목표</div><div class="inc-stat-val" id="is-daily-goal">0</div><div class="inc-stat-sub">남은 실근무 기준</div></div>
           <div class="inc-stat"><div class="inc-stat-lbl">📊 이번 주</div><div class="inc-stat-val" id="is-week">0</div><div class="inc-stat-sub">포인트</div></div>
         </div>
-        <!-- 4개 누적 시술 스탯 -->
-        <div class="stat-grid" style="margin-bottom:16px;">
-          <div class="scard e"><div class="stag te">위내시경 EGD</div><div class="snum ne" id="sc-e">0</div><div class="slbl">누적 건수</div><div class="stoday" id="sc-et">오늘 0건</div></div>
-          <div class="scard c"><div class="stag tc">대장내시경 CFS</div><div class="snum nc" id="sc-c">0</div><div class="slbl">누적 건수</div><div class="stoday" id="sc-ct">오늘 0건</div></div>
-          <div class="scard be"><div class="stag tbe">조직검사 · 위</div><div class="snum nbe" id="sc-be">0</div><div class="slbl">누적 건수</div><div class="stoday" id="sc-bet">오늘 0건</div></div>
-          <div class="scard bc"><div class="stag tbc">조직검사 · 대장</div><div class="snum nbc" id="sc-bc">0</div><div class="slbl">누적 건수</div><div class="stoday" id="sc-bct">오늘 0건</div></div>
-        </div>
-        <!-- 항목별 일·주·월 시술 건수 -->
-        <section class="proc-dashboard" aria-labelledby="proc-dashboard-title">
-          <div class="proc-dashboard-head">
-            <div>
-              <div class="proc-dashboard-title" id="proc-dashboard-title">📊 시술 건수 대시보드</div>
-              <div class="proc-dashboard-sub">저장된 기록 기준 · 오늘 / 최근 7일(오늘 포함) / 이번 달</div>
-            </div>
-            <div class="proc-dashboard-sub" id="proc-dashboard-range"></div>
-          </div>
-          <div class="proc-dashboard-grid" id="proc-dashboard-grid"></div>
-        </section>
+<section id="procedure-calendar" class="ec-card ec-overview" aria-labelledby="ec-title">
+  <div class="ec-heading"><div><span class="ec-eyebrow">PROCEDURE OVERVIEW</span><h2 id="ec-title">시술 현황 · 캘린더</h2><p>건수 확인부터 날짜별 기록까지, 한곳에서</p></div><div class="ec-tools"><button type="button" onclick="changeIncMonth(-1)" aria-label="이전 달">‹</button><input id="ec-month" type="month" aria-label="조회 월" onchange="ecChangeMonth(this.value)"><button type="button" onclick="changeIncMonth(1)" aria-label="다음 달">›</button><button type="button" onclick="ecChangeMonth(TODAY.slice(0,7))">이번 달</button></div></div>
+  <div class="ec-scope" role="group" aria-label="건수 조회 기간">
+    <button type="button" data-scope="today" aria-pressed="false" onclick="ecSetScope('today')">오늘</button>
+    <button type="button" data-scope="week" aria-pressed="false" onclick="ecSetScope('week')">최근 7일</button>
+    <button type="button" data-scope="month" aria-pressed="true" onclick="ecSetScope('month')">선택 월</button>
+    <button type="button" data-scope="all" aria-pressed="false" onclick="ecSetScope('all')">전체 누적</button>
+  </div>
+  <div class="ec-period-info"><strong id="ec-period-label"></strong><span id="ec-period-range"></span></div>
+  <div id="ec-summary" class="ec-summary" role="status" aria-live="polite"></div>
+  <p class="ec-summary-note" id="ec-summary-note"></p>
+  <details class="ec-calendar-view" open><summary><span>날짜별 시술 캘린더 <small id="ec-calendar-month"></small></span><span class="ec-disclosure">펼치기 / 접기</span></summary>
+  <div class="ec-week"> <span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span></div>
+  <div id="ec-grid" class="ec-grid"></div>
+  </details>
+  <details class="ec-utilities"><summary>표시 안내 · CSV 내보내기</summary>  <div class="ec-tools ec-export"><label>CSV 범위 <select id="ec-range"><option value="month">선택 월</option><option value="year">선택 연도</option></select></label><button onclick="ecExport('daily')">일별 건수 CSV</button><button onclick="ecExport('summary')">월별 합계 CSV</button><button onclick="ecExport('cases')">실패 케이스 CSV</button><button onclick="ecRefresh()">새로고침</button></div>
+  <p class="ec-hint">오후 근무일은 오전 | 오후 열로 표시합니다. 모바일은 위·대장·실패 건수와 처치 합계(조직검사·CPP·EMR·CLO)를 간략히 표시합니다. 위·대장 숫자는 총건수·일반건수 (예: 12·1 = 총 12건, 일반 1건, 수면 11건). 일반 0건은 생략, ?는 미분류 포함입니다. 날짜를 누르면 상세 조회할 수 있습니다.</p>
+</details>
+  <details class="ec-month-cases"><summary id="ec-case-summary">이달의 실패 케이스</summary><label>케이스 검색 <input id="ec-search" placeholder="날짜, 성별, 도달 부위, 과거력…" oninput="ecRenderCases()"></label><div id="ec-case-list"></div></details>
+</section>
+
         <!-- 일별 입력 -->
         <div class="ipanel" style="margin-bottom:16px;">
           <!-- 날짜 선택 -->
@@ -1440,15 +1447,6 @@ html,body{height:100%;font-family:'Noto Sans KR',sans-serif;background:var(--sb)
           <button class="btn-save-day" id="bsave" onclick="saveDay()">저장</button>
         </div>
         </div>
-<section id="procedure-calendar" class="ec-card">
-  <div class="ec-heading"><div><h2>시술 캘린더</h2><p>저장한 일일 건수가 자동 반영됩니다 · 날짜를 누르면 상세 기록</p></div><div class="ec-tools"><button type="button" onclick="changeIncMonth(-1)" aria-label="이전 달">‹</button><input id="ec-month" type="month" aria-label="조회 월" onchange="ecChangeMonth(this.value)"><button type="button" onclick="changeIncMonth(1)" aria-label="다음 달">›</button><button type="button" onclick="ecChangeMonth(TODAY.slice(0,7))">이번 달</button></div></div>
-  <div id="ec-summary" class="ec-summary"></div>
-  <div class="ec-tools ec-export"><label>CSV 범위 <select id="ec-range"><option value="month">선택 월</option><option value="year">선택 연도</option></select></label><button onclick="ecExport('daily')">일별 건수 CSV</button><button onclick="ecExport('summary')">월별 합계 CSV</button><button onclick="ecExport('cases')">실패 케이스 CSV</button><button onclick="ecRefresh()">새로고침</button></div>
-  <p class="ec-hint">오후 근무일은 오전 | 오후 열로 표시합니다. 위·대장 숫자는 총건수·일반건수 (예: 12·1 = 총 12건, 일반 1건, 수면 11건). 일반 0건은 생략, ?는 미분류 포함입니다. 날짜를 누르면 상세 조회할 수 있습니다.</p>
-  <div class="ec-week"> <span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span></div>
-  <div id="ec-grid" class="ec-grid"></div>
-  <details class="ec-month-cases"><summary id="ec-case-summary">이달의 실패 케이스</summary><label>케이스 검색 <input id="ec-search" placeholder="날짜, 성별, 도달 부위, 과거력…" oninput="ecRenderCases()"></label><div id="ec-case-list"></div></details>
-</section>
 <dialog id="ec-dialog" class="ec-dialog">
   <div class="ec-heading"><h2 id="ec-day-title"></h2><button type="button" onclick="ecClose()" aria-label="닫기">✕</button></div>
   <div id="ec-day-counts" class="ec-summary"></div>
@@ -2155,15 +2153,6 @@ let incViewMonth = '';
 let incSettings = { h1:1000, h2:1300, monthly:[0,1000,1000,1000,1000,1000,1000,1300,1300,1300,1300,1300,1300] };
 let incDays = [];
 const POINT = { egd:1, cfs:2, bxe:0.5, bxc:0.5, cpp:1, clo:0.5 };
-const PROCEDURE_METRICS = [
-  {key:'egd', label:'위내시경 (EGD)', icon:'🟦'},
-  {key:'cfs', label:'대장내시경 (CFS)', icon:'🟩'},
-  {key:'bxe', label:'위 조직검사 (Bx-E)', icon:'🟨'},
-  {key:'bxc', label:'대장 조직검사 (Bx-C)', icon:'🟧'},
-  {key:'cppOnly', label:'용종절제술 (CPP)', icon:'🟥'},
-  {key:'emr', label:'점막절제술 (EMR)', icon:'🟫'},
-  {key:'clo', label:'CLO (헬리코박터)', icon:'🟪'}
-];
 const GRADE_H1 = [{g:'EX',min:1100,amt:'250만'},{g:'VG',min:1000,amt:'200만'},{g:'GD',min:900,amt:'150만'},{g:'NI',min:800,amt:'100만'},{g:'UN',min:0,amt:'50만'}];
 const GRADE_H2 = [{g:'EX',min:1300,amt:'250만'},{g:'VG',min:1200,amt:'200만'},{g:'GD',min:1100,amt:'150만'},{g:'NI',min:1000,amt:'100만'},{g:'UN',min:0,amt:'50만'}];
 const DEFAULT_WORK_GOAL = { amPoint:40, pmPoint:13, pmDays:[2,4], roundTo:10 };
@@ -2192,7 +2181,7 @@ const BUILT_IN_HOLIDAYS = {
     '2026-12-25':'성탄절'
   }
 };
-const APP_BUILD = '2026-10-27-calendar-failures-v1';
+const APP_BUILD = '2026-11-17-unified-procedure-overview';
 const PM_DAY_LABELS = {1:'월',2:'화',4:'목',5:'금'};
 
 function getMonthTarget(ym){ var mo=parseInt(ym.slice(5,7)); if(incSettings.monthly&&incSettings.monthly[mo])return incSettings.monthly[mo]; return mo>=7?(incSettings.h2||1300):(incSettings.h1||1000); }
@@ -2785,47 +2774,7 @@ async function saveDay() {
   finally { btn.disabled=false; btn.textContent='저장'; }
 }
 
-function updateStats() {
-  const te=allDays.reduce((s,d)=>s+(d.egd||0),0);
-  const tc=allDays.reduce((s,d)=>s+(d.cfs||0),0);
-  const tbe=allDays.reduce((s,d)=>s+(d.bxe||0),0);
-  const tbc=allDays.reduce((s,d)=>s+(d.bxc||0),0);
-  document.getElementById('sc-e').textContent  = te.toLocaleString();
-  document.getElementById('sc-c').textContent  = tc.toLocaleString();
-  document.getElementById('sc-be').textContent = tbe.toLocaleString();
-  document.getElementById('sc-bc').textContent = tbc.toLocaleString();
-  const td=allDays.find(d=>d.key===TODAY);
-  const et=document.getElementById('sc-et'); if(et) et.textContent=`오늘 ${td?td.egd||0:0}건`;
-  const ct=document.getElementById('sc-ct'); if(ct) ct.textContent=`오늘 ${td?td.cfs||0:0}건`;
-  const bt=document.getElementById('sc-bet'); if(bt) bt.textContent=`오늘 ${td?td.bxe||0:0}건`;
-  const bct=document.getElementById('sc-bct'); if(bct) bct.textContent=`오늘${td?td.bxc||0:0}건`;
-  renderProcedureDashboard();
-}
-
-function renderProcedureDashboard() {
-  const grid=document.getElementById('proc-dashboard-grid');
-  if(!grid)return;
-  const periods=procedureStats.buildProcedurePeriods(allDays,TODAY);
-  const ws=periods.range.startKey, we=periods.range.endKey;
-  const todayRec=periods.todayRec;
-  const weekRows=periods.weekRows;
-  const monthRows=periods.monthRows;
-  const sum=function(rows,key){return rows.reduce(function(total,row){return total+endoCalendar.value(row,key);},0);};
-  grid.innerHTML=PROCEDURE_METRICS.map(function(metric){
-    const day=endoCalendar.value(todayRec,metric.key);
-    const week=sum(weekRows,metric.key);
-    const month=sum(monthRows,metric.key);
-    return '<article class="proc-card">'
-      +'<div class="proc-card-name">'+metric.icon+' '+metric.label+'</div>'
-      +'<div class="proc-periods">'
-      +'<div class="proc-period"><div class="proc-period-label">오늘</div><div class="proc-period-value today">'+day.toLocaleString()+'</div></div>'
-      +'<div class="proc-period"><div class="proc-period-label">최근 7일</div><div class="proc-period-value">'+week.toLocaleString()+'</div></div>'
-      +'<div class="proc-period"><div class="proc-period-label">이번 달</div><div class="proc-period-value">'+month.toLocaleString()+'</div></div>'
-      +'</div></article>';
-  }).join('');
-  const range=document.getElementById('proc-dashboard-range');
-  if(range)range.textContent=ws+' ~ '+we;
-}
+function updateStats() { ecRender(); }
 
 function renderHist() {
   const period=document.getElementById('psel').value;
@@ -3817,23 +3766,59 @@ const endoCalendar = (() => {
   return {metrics,count,cases,failures,value,sum,escape,csv,mutate};
 })();
 let ecDate='', ecEditingId=null, ecBusy=false, ecPendingId=null;
+let ecScope='month';
 const ecEl=id=>document.getElementById(id);
 function ecMetricStyle(m){return '--mc:'+m[3]+';--mb:'+m[4];}
-function ecMetricCards(rec){return endoCalendar.metrics.map(m=>`<div class="ec-metric" style="${ecMetricStyle(m)}">${m[1]}<strong>${endoCalendar.value(rec,m[0])}</strong></div>`).join('');}
+function ecMetricCards(rec){return endoCalendar.metrics.map(m=>`<div class="ec-metric" style="${ecMetricStyle(m)}">${m[1]}<strong>${endoCalendar.value(rec,m[0]).toLocaleString()}<small>건</small></strong></div>`).join('');}
+function ecSetScope(scope){
+  if(!['today','week','month','all'].includes(scope))return;
+  ecScope=scope;ecRenderSummary();
+}
+function ecRenderSummary(){
+  if(!ecEl('ec-summary'))return;
+  const ym=incViewMonth||TODAY.slice(0,7);
+  const periods=procedureStats.buildProcedurePeriods(allDays,TODAY);
+  const monthRows=allDays.filter(d=>d.key&&d.key.slice(0,7)===ym);
+  const todayRows=allDays.filter(d=>d.key===TODAY);
+  const rows={today:todayRows,week:periods.weekRows,month:monthRows,all:allDays}[ecScope];
+  const labels={today:'오늘의 시술',week:'최근 7일 시술',month:ym.replace('-','년 ')+'월 시술',all:'전체 누적 시술'};
+  const sorted=rows.map(d=>d.key).filter(Boolean).sort();
+  const last=new Date(+ym.slice(0,4),+ym.slice(5,7),0).getDate();
+  const ranges={today:TODAY,week:periods.range.startKey+' ~ '+TODAY,month:ym+'-01 ~ '+ym+'-'+last,all:sorted.length?sorted[0]+' ~ '+sorted[sorted.length-1]:'저장된 기록 없음'};
+  ecEl('ec-period-label').textContent=labels[ecScope];
+  ecEl('ec-period-range').textContent=ranges[ecScope];
+  ecEl('ec-summary').innerHTML=ecMetricCards(endoCalendar.sum(rows));
+  const total=rows.reduce((n,d)=>n+endoCalendar.value(d,'egd')+endoCalendar.value(d,'cfs'),0);
+  ecEl('ec-summary-note').textContent=rows.length?'위·대장 총 '+total.toLocaleString()+'건 · 기록 '+rows.length+'일 · CPP와 EMR은 별도 집계':'이 기간에 저장된 기록이 없습니다. 아래 일별 입력에서 기록을 추가하세요.';
+  document.querySelectorAll('[data-scope]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.scope===ecScope)));
+  ecEl('ec-calendar-month').textContent=ym+' · 날짜를 눌러 조회·수정';
+}
 function ecRender(){
   if(!ecEl('ec-grid'))return;
   const ym=incViewMonth||TODAY.slice(0,7);ecEl('ec-month').value=ym;
   const rows=allDays.filter(d=>d.key&&d.key.slice(0,7)===ym);
-  ecEl('ec-summary').innerHTML=ecMetricCards(endoCalendar.sum(rows));
+  ecRenderSummary();
   const [y,m]=ym.split('-').map(Number), start=new Date(y,m-1,1).getDay(), last=new Date(y,m,0).getDate();
   const byDate=new Map(rows.map(d=>[d.key,d]));
   let html='<div aria-hidden="true"></div>'.repeat(start);
   for(let day=1;day<=last;day++){
     const key=ym+'-'+String(day).padStart(2,'0'), rec=byDate.get(key);
-    const badges=sedationBadges(rec);
+    const badges=sedationBadges(rec)+ecMobileBadges(rec);
     html+=`<button type="button" class="ec-day" data-date="${key}" onclick="ecOpen('${key}')" aria-label="${key} 상세 기록" ${key===TODAY?'aria-current="date"':''}><span class="ec-date">${day}</span>${badges||'<span class="ec-empty">'+(rec?'0건':'미입력')+'</span>'}</button>`;
   }
   ecEl('ec-grid').innerHTML=html;ecRenderCases();
+}
+function ecMobileBadges(rec){
+  if(!rec)return '';
+  let out='';
+  for(const m of endoCalendar.metrics.filter(m=>['egd','cfs','failureCount'].includes(m[0]))){
+    const n=endoCalendar.value(rec,m[0]);if(!n)continue;
+    const awake=endoCalendar.value(rec,m[0]+'_awake');
+    out+=`<span class="ec-badge ec-mobile-badge" style="${ecMetricStyle(m)}"><span>${m[2]}</span><b>${n}${awake?'·'+awake:''}</b></span>`;
+  }
+  const procedures=['bxe','bxc','cppOnly','emr','clo'].reduce((n,k)=>n+endoCalendar.value(rec,k),0);
+  if(procedures)out+=`<span class="ec-badge ec-mobile-badge" style="--mc:#665286;--mb:#f1edf7" title="조직검사·CPP·EMR·CLO 합계"><span>처치</span><b>${procedures}</b></span>`;
+  return out;
 }
 function ecChangeMonth(ym){if(!/^\d{4}-(0[1-9]|1[0-2])$/.test(ym))return;loadIncentive(ym);refreshAdrUI();}
 function ecCaseHTML(c,date,inDialog){

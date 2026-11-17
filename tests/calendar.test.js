@@ -15,3 +15,16 @@ test('HTML escaping and unknown values',()=>{const out=vm.runInContext(`ecCaseHT
 test('counter save merges and backup includes registry',()=>{assert.match(html,/adr: existData\.adr \?\? null,\s*\}, \{ merge:true \}\)/);assert.match(html,/days:await readBackupCollection\(currentUid,'days'\)/);});
 
 test('EMR is excluded from CPP in records and summaries',()=>{const d={cpp:1,emr:1};assert.equal(a.value(d,'cppOnly'),0);assert.equal(a.value(d,'emr'),1);const s=a.sum([d,{cpp:4,emr:1}]);assert.equal(a.value(s,'cppOnly'),3);assert.equal(s.emr,2);});
+
+test('unified overview keeps current periods independent of the calendar month',()=>{
+ const elements={};const buttons=['today','week','month','all'].map(scope=>({dataset:{scope},setAttribute(k,v){this[k]=v}}));
+ const doc={addEventListener(){},getElementById(id){return elements[id]||(elements[id]={});},querySelectorAll(){return buttons}};
+ const records=[{key:'2026-10-31',egd:100},{key:'2026-11-10',egd:20},{key:'2026-11-11',egd:3,cpp:3,emr:1},{key:'2026-11-17',egd:5},{key:'2026-11-18',egd:50}];
+ const c=vm.createContext({document:doc,allDays:records,TODAY:'2026-11-17',incViewMonth:'2026-10',procedureStats:require('../procedure-stats.js')});
+ vm.runInContext(source,c);
+ vm.runInContext("ecSetScope('month')",c);assert.equal(elements['ec-period-label'].textContent,'2026년 10월 시술');assert(elements['ec-summary'].innerHTML.includes('100<small>'));
+ vm.runInContext("ecSetScope('today')",c);assert(elements['ec-summary'].innerHTML.includes('5<small>'));assert.equal(elements['ec-period-range'].textContent,'2026-11-17');
+ vm.runInContext("ecSetScope('week')",c);assert.equal(elements['ec-period-range'].textContent,'2026-11-11 ~ 2026-11-17');assert(elements['ec-summary'].innerHTML.includes('8<small>'));assert(elements['ec-summary'].innerHTML.includes('2<small>'));assert.equal(buttons[1]['aria-pressed'],'true');
+ vm.runInContext("ecSetScope('all')",c);assert(elements['ec-summary'].innerHTML.includes('178<small>'));
+ c.incViewMonth='2024-02';vm.runInContext("ecSetScope('month')",c);assert.equal(elements['ec-period-range'].textContent,'2024-02-01 ~ 2024-02-29');assert(elements['ec-summary-note'].textContent.includes('기록이 없습니다'));
+});
