@@ -63,37 +63,17 @@
     return Number.isFinite(count) && count > 0 ? count : 0;
   }
 
-  // 이 앱에서는 CPP와 대장 Bx-C를 모두 용종 처치 건수로 센다.
-  // 병리에서 확인된 adenoma 수(ADR)도 PDR의 하한으로 사용한다.
+  // cpp는 저장 시 CPP+EMR 합계다. EMR을 다시 더하지 않는다.
   function getSuggestedPdrCount(rec) {
-    if (!rec) return 0;
-    var treatedPolyps = normalizeCount(rec.cpp) + normalizeCount(rec.bxc);
-    return Math.max(treatedPolyps, normalizeCount(rec.adr));
+    return normalizeCount(rec && rec.cpp) + normalizeCount(rec && rec.bxc);
   }
 
   function getPdrCount(rec) {
-    if (!rec) return 0;
-    var saved = rec.pdr == null ? null : normalizeCount(rec.pdr);
-    var suggested = getSuggestedPdrCount(rec);
-    if (rec.pdrAuto !== true && saved !== null) {
-      return Math.max(saved, suggested);
-    }
-    return Math.max(saved == null ? 0 : saved, suggested);
+    return getSuggestedPdrCount(rec);
   }
 
   function buildPdrSaveState(previous, cpp, bxc, adr) {
-    var prev = previous || {};
-    var cppCount = normalizeCount(cpp);
-    var bxcCount = normalizeCount(bxc);
-    var adrCount = normalizeCount(adr);
-    var minimum = Math.max(cppCount + bxcCount, adrCount);
-    if (prev.pdrAuto === false && prev.pdr != null) {
-      return {
-        pdr: Math.max(normalizeCount(prev.pdr), minimum),
-        pdrAuto: false
-      };
-    }
-    return { pdr: minimum, pdrAuto: true };
+    return { pdr: getSuggestedPdrCount({cpp:cpp,bxc:bxc}), pdrAuto:true };
   }
 
   return {
