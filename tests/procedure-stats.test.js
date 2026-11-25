@@ -59,7 +59,22 @@ test('PDR is the exact arithmetic sum, independent of old manual values and ADR'
 });
 
 test('reductions, cleared inputs and stored EMR-inclusive CPP do not retain stale PDR', () => {
-  assert.equal(getPdrCount({cpp:4,emr:1,bxc:2}),6);
-  assert.equal(getPdrCount({cpp:1,emr:1,bxc:0,pdr:6}),1);
+  assert.equal(getPdrCount({cpp:4,emr:1,cppInputIncludesEmr:true,bxc:2}),6);
+  assert.equal(getPdrCount({cpp:1,emr:1,cppInputIncludesEmr:true,bxc:0,pdr:6}),1);
   assert.equal(getPdrCount({cpp:'',bxc:'',pdr:6}),0);
+});
+test('new explicit manual adjustments are preserved, old stale totals are not',()=>{
+ assert.equal(getPdrCount({cpp:3,bxc:2,emr:1,cppInputIncludesEmr:true,pdr:6,pdrAuto:false,pdrSchemaVersion:2}),6);
+ assert.equal(getPdrCount({cpp:3,bxc:2,emr:1,cppInputIncludesEmr:true,pdr:99,pdrAuto:false}),5);
+ assert.equal(getPdrCount({cpp:3,bxc:2,emr:1,cppInputIncludesEmr:true,pdr:99,pdrAuto:true,pdrSchemaVersion:2}),5);
+ assert.equal(getPdrCount({cpp:3,bxc:2,emr:1,cppInputIncludesEmr:true,pdr:0,pdrAuto:false,pdrSchemaVersion:2}),0);
+});
+test('legacy CPP+EMR storage is restored to the original inclusive input exactly once',()=>{
+ const {normalizeRecord,getPdrSplit}=require('../procedure-stats.js');
+ const raw={cpp:4,emr:1,bxc:2,am_cpp:4,am_emr:1,am_bxc:2,pts:25};
+ const normalized=normalizeRecord(raw);
+ assert.equal(normalized.cpp,3);assert.equal(normalized.am_cpp,3);assert.equal(normalized.pts,24);
+ assert.equal(getPdrCount(raw),5);assert.equal(getPdrCount(normalized),5);
+ assert.equal(normalizeRecord(normalized).cpp,3);assert.equal(raw.cpp,4);
+ assert.deepEqual(getPdrSplit(normalized),{am:5,pm:0,amAuto:true,pmAuto:true});
 });
